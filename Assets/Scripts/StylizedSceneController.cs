@@ -19,6 +19,8 @@ public sealed class StylizedSceneController : MonoBehaviour
     private static readonly int ShineWidthId = Shader.PropertyToID("_ShineWidth");
     private static readonly int ShineSoftnessId = Shader.PropertyToID("_ShineSoftness");
     private static readonly int CloudSpeedId = Animator.StringToHash("Speed");
+    private const float MaxRainEmissionRate = 30f;
+    private const float RainCloudMinimumValue = 0.7f;
 
     [Header("Statue Gold Shine")]
     [Tooltip("Shared material used by the CatStatueShine UI Image. The controller updates this existing material and never creates runtime material instances.")]
@@ -47,6 +49,16 @@ public sealed class StylizedSceneController : MonoBehaviour
     [Tooltip("On-screen slider that controls the Clouds Animator's Speed parameter. The current UI range is -1 to 1, where 0 pauses the motion.")]
     [SerializeField] private Slider cloudSpeedSlider;
 
+    [Header("Rain UI Bindings")]
+    [Tooltip("Particle System whose rate-over-time emission is controlled by the Rain Amount slider.")]
+    [SerializeField] private ParticleSystem rainParticleSystem;
+
+    [Tooltip("On-screen slider with a range of 0 to 30, matching the rain emission rate per second.")]
+    [SerializeField] private Slider rainAmountSlider;
+
+    [Tooltip("The single cloud layer darkened as rainfall increases. Its hue, saturation, and alpha are preserved.")]
+    [SerializeField] private Image rainCloudImage;
+
     [Header("Authoring Save")]
     [Tooltip("Saves the current shine-material values to disk when clicked in Play mode. This action is editor-only and is omitted from player builds.")]
     [SerializeField] private Button saveSettingsButton;
@@ -59,6 +71,8 @@ public sealed class StylizedSceneController : MonoBehaviour
     private float statueGoldShineWidth;
     private float statueGoldShineSoftness;
     private float cloudAnimationSpeed;
+    private Color rainCloudBaseColor;
+    private bool rainCloudBaseColorCaptured;
 
     private void OnEnable()
     {
@@ -68,12 +82,15 @@ public sealed class StylizedSceneController : MonoBehaviour
         BindStatueGoldShineControls();
         InitializeCloudMovement();
         BindCloudMovementControls();
+        InitializeRain();
+        BindRainControls();
     }
 
     private void OnDisable()
     {
         UnbindStatueGoldShineControls();
         UnbindCloudMovementControls();
+        UnbindRainControls();
     }
 
     private void OnValidate()
@@ -125,6 +142,44 @@ public sealed class StylizedSceneController : MonoBehaviour
         {
             cloudAnimator.SetFloat(CloudSpeedId, cloudAnimationSpeed);
         }
+    }
+
+    /// <summary>
+    /// Maps the UI's 0-30 amount directly to Particle System rate-over-time emission.
+    /// The same normalized amount lowers only Cloud1's HSV Value from 100% to 70%.
+    /// </summary>
+    public void SetRainAmount(float rainAmount)
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        float clampedAmount = Mathf.Clamp(rainAmount, 0f, MaxRainEmissionRate);
+
+        if (rainParticleSystem != null)
+        {
+            ParticleSystem.EmissionModule emission = rainParticleSystem.emission;
+            emission.rateOverTime = clampedAmount;
+        }
+
+        if (rainCloudImage == null)
+        {
+            return;
+        }
+
+        if (!rainCloudBaseColorCaptured)
+        {
+            rainCloudBaseColor = rainCloudImage.color;
+            rainCloudBaseColorCaptured = true;
+        }
+
+        Color.RGBToHSV(rainCloudBaseColor, out float hue, out float saturation, out float baseValue);
+        float rainFraction = clampedAmount / MaxRainEmissionRate;
+        float value = Mathf.Lerp(baseValue, baseValue * RainCloudMinimumValue, rainFraction);
+        Color rainTint = Color.HSVToRGB(hue, saturation, value);
+        rainTint.a = rainCloudBaseColor.a;
+        rainCloudImage.color = rainTint;
     }
 
     /// <summary>Sets the highlight intensity without changing its RGB tint.</summary>
@@ -241,6 +296,45 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (cloudSpeedSlider != null)
         {
             cloudSpeedSlider.onValueChanged.RemoveListener(SetCloudAnimationSpeed);
+        }
+    }
+
+    private void InitializeRain()
+    {
+        // Rain effects are previewed only in Play mode so authoring values on the UI Image
+        // and Particle System are not modified while editing the scene.
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        if (rainCloudImage != null)
+        {
+            rainCloudBaseColor = rainCloudImage.color;
+            rainCloudBaseColorCaptured = true;
+        }
+
+        if (rainAmountSlider != null)
+        {
+            SetRainAmount(rainAmountSlider.value);
+        }
+    }
+
+    private void BindRainControls()
+    {
+        UnbindRainControls();
+
+        if (rainAmountSlider != null)
+        {
+            rainAmountSlider.onValueChanged.AddListener(SetRainAmount);
+        }
+    }
+
+    private void UnbindRainControls()
+    {
+        if (rainAmountSlider != null)
+        {
+            rainAmountSlider.onValueChanged.RemoveListener(SetRainAmount);
         }
     }
 
