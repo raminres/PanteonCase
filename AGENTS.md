@@ -39,6 +39,13 @@ This repository is a Unity technical-art case study. Preserve the supplied styli
 
 Create only the folders/assets that are useful at the current milestone; do not add placeholder scripts or shaders merely to satisfy this structure.
 
+## Current project checkpoint (2026-10-14)
+
+- The authored scene is `Assets/Scenes/PanteonCaseScene.unity`; retain current unsaved/user work and do not restore the deleted `SampleScene` without explicit instruction.
+- Statue shine, cloud-speed UI binding, and rain amount / cloud darkening are implemented.
+- `Assets/Shaders/UI/StylizedPoolWater.shader` and `Assets/Materials/MT_Water.mat` are an early packed-mask water pass, not an approved final effect. The next task is visual diagnosis/design, not adding controls by default.
+- Read `PROJECT_HANDOFF.md` before continuing work. It contains the active asset bindings, iOS RenderTexture note, current water limitations, and the remaining validation work.
+
 ## Quality gates
 
 - A layer rebuild must visually match the supplied source before animation is added.

@@ -109,10 +109,10 @@ ScriptedImporter:
     rect:
       serializedVersion: 2
       x: 4
-      y: 2644
+      y: 3658
       width: 559
       height: 380
-    spriteID: 12712af48402b3d4e83ab16c5a3b8bbe
+    spriteID: c101391677c3cfc429016b597d8bf744
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -120,7 +120,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 2644}
+    uvTransform: {x: 4, y: 3658}
     spritePosition: {x: 713, y: 1166}
   - name: CatStatue
     originalName: 
@@ -130,11 +130,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 2054
+      x: 1996
+      y: 1492
       width: 664
       height: 582
-    spriteID: f9facd527f457a242860250b7d5f0f63
+    spriteID: 12712af48402b3d4e83ab16c5a3b8bbe
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -142,7 +142,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 2054}
+    uvTransform: {x: 1996, y: 1492}
     spritePosition: {x: 660, y: 1128}
   - name: Leaf1
     originalName: 
@@ -152,11 +152,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 283
-      y: 3620
+      x: 1996
+      y: 2308
       width: 294
       height: 235
-    spriteID: 02484e95146fd1449a382ef7129d489b
+    spriteID: f9facd527f457a242860250b7d5f0f63
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -164,7 +164,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 283, y: 3620}
+    uvTransform: {x: 1996, y: 2308}
     spritePosition: {x: 466, y: 0}
   - name: Leaf2
     originalName: 
@@ -174,11 +174,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 3620
+      x: 1677
+      y: 3658
       width: 271
       height: 259
-    spriteID: 9fd6c3833811c854693d7457cf18b987
+    spriteID: 02484e95146fd1449a382ef7129d489b
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -186,7 +186,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 3620}
+    uvTransform: {x: 1677, y: 3658}
     spritePosition: {x: 0, y: 0}
   - name: Leaf3
     originalName: 
@@ -196,11 +196,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 3032
+      x: 1450
+      y: 3202
       width: 503
       height: 354
-    spriteID: cfa3db91f55876042842f7bde53985ee
+    spriteID: 9fd6c3833811c854693d7457cf18b987
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -208,7 +208,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 3032}
+    uvTransform: {x: 1450, y: 3202}
     spritePosition: {x: 0, y: 0}
   - name: Leaf4
     originalName: 
@@ -218,11 +218,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 283
-      y: 3863
+      x: 1996
+      y: 2551
       width: 306
       height: 225
-    spriteID: b313027183dc57c4c9a3a2f1d164068f
+    spriteID: cfa3db91f55876042842f7bde53985ee
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -230,7 +230,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 283, y: 3863}
+    uvTransform: {x: 1996, y: 2551}
     spritePosition: {x: 1203, y: 2}
   - name: Leaf5
     originalName: 
@@ -240,11 +240,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 1615
-      y: 1032
+      x: 1996
+      y: 2784
       width: 211
       height: 292
-    spriteID: 9b96dca8f19751344a4d50352651ac51
+    spriteID: b313027183dc57c4c9a3a2f1d164068f
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -252,53 +252,9 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 1615, y: 1032}
+    uvTransform: {x: 1996, y: 2784}
     spritePosition: {x: 1501, y: 0}
-  - name: Cloud1
-    originalName: 
-    pivot: {x: 0.5, y: 0.5}
-    alignment: 0
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 1423
-      y: 2054
-      width: 351
-      height: 223
-    spriteID: 9047895b4145e774baeece26ff88574c
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 1423, y: 2054}
-    spritePosition: {x: 1122, y: 1731}
-  - name: Cloud2
-    originalName: 
-    pivot: {x: 0.5, y: 0.5}
-    alignment: 0
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 3394
-      width: 345
-      height: 218
-    spriteID: c72f088ab643fcf4585db5646594a344
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 4, y: 3394}
-    spritePosition: {x: 518, y: 1735}
-  - name: Water
+  - name: Sides
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -308,9 +264,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 1890
-      height: 1020
-    spriteID: 7f9b639d8272b58408f9f9024891585d
+      width: 1984
+      height: 2152
+    spriteID: c25eb5ae8a3008a45bed0fa3d1120a3a
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -319,7 +275,95 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 4, y: 4}
-    spritePosition: {x: 94, y: 165}
+    spritePosition: {x: 0, y: 0}
+  - name: Cloud1
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 1318
+      y: 3658
+      width: 351
+      height: 223
+    spriteID: 9b96dca8f19751344a4d50352651ac51
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 1318, y: 3658}
+    spritePosition: {x: 1122, y: 1731}
+  - name: Cloud2
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 1996
+      y: 2082
+      width: 345
+      height: 218
+    spriteID: 9047895b4145e774baeece26ff88574c
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 1996, y: 2082}
+    spritePosition: {x: 518, y: 1735}
+  - name: Cloud3
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 1996
+      y: 1029
+      width: 1335
+      height: 455
+    spriteID: 3aa595b26a4efce41b002d63dc61e54f
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 1996, y: 1029}
+    spritePosition: {x: 325, y: 1476}
+  - name: TreesBackground
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 3202
+      width: 1438
+      height: 448
+    spriteID: 0049a591d255a064da13ecaa672835a0
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 3202}
+    spritePosition: {x: 166, y: 1112}
   - name: SkyBackground
     originalName: 
     pivot: {x: 0.5, y: 0.5}
@@ -329,10 +373,10 @@ ScriptedImporter:
     rect:
       serializedVersion: 2
       x: 4
-      y: 1032
-      width: 1603
-      height: 1014
-    spriteID: 28241d9b7d20cb24a91448aee8df0bd1
+      y: 2164
+      width: 1984
+      height: 1030
+    spriteID: c6e7a602ded72d040bcb3c69e4485354
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -340,8 +384,8 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 1032}
-    spritePosition: {x: 181, y: 1138}
+    uvTransform: {x: 4, y: 2164}
+    spritePosition: {x: 0, y: 1122}
   - name: FrontStone
     originalName: 
     pivot: {x: 0.5, y: 0.5}
@@ -350,11 +394,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 676
-      y: 2054
+      x: 571
+      y: 3658
       width: 739
       height: 261
-    spriteID: 0049a591d255a064da13ecaa672835a0
+    spriteID: 28241d9b7d20cb24a91448aee8df0bd1
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -362,8 +406,52 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 676, y: 2054}
+    uvTransform: {x: 571, y: 3658}
     spritePosition: {x: 609, y: 0}
+  - name: Waterfall
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 571
+      y: 3927
+      width: 472
+      height: 164
+    spriteID: 1b3a82f3a8c1e104199af9f0d4ac76c9
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 571, y: 3927}
+    spritePosition: {x: 770, y: 1047}
+  - name: Water
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 1996
+      y: 4
+      width: 1890
+      height: 1020
+    spriteID: c72f088ab643fcf4585db5646594a344
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 1996, y: 4}
+    spritePosition: {x: 94, y: 139}
   spriteImportData: []
   rigSpriteImportData: []
   sharedRigSpriteImportData: []
@@ -424,7 +512,7 @@ ScriptedImporter:
   documentPivot: {x: 0, y: 0}
   documentAlignment: 7
   importHiddenLayers: 0
-  layerMappingOption: 2
+  layerMappingOption: 1
   generatePhysicsShape: 0
   paperDollMode: 0
   keepDupilcateSpriteName: 1
@@ -457,9 +545,9 @@ ScriptedImporter:
     spriteName: CatStatueShine
     isGroup: 0
     parentIndex: -1
-    spriteID: 12712af48402b3d4e83ab16c5a3b8bbe
-    layerID: 13
-    mosaicPosition: {x: 4, y: 2644}
+    spriteID: c101391677c3cfc429016b597d8bf744
+    layerID: 17
+    mosaicPosition: {x: 4, y: 3658}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -467,9 +555,9 @@ ScriptedImporter:
     spriteName: CatStatue
     isGroup: 0
     parentIndex: -1
-    spriteID: f9facd527f457a242860250b7d5f0f63
-    layerID: 12
-    mosaicPosition: {x: 4, y: 2054}
+    spriteID: 12712af48402b3d4e83ab16c5a3b8bbe
+    layerID: 16
+    mosaicPosition: {x: 1996, y: 1492}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -477,9 +565,9 @@ ScriptedImporter:
     spriteName: Leaf1
     isGroup: 0
     parentIndex: -1
-    spriteID: 02484e95146fd1449a382ef7129d489b
-    layerID: 11
-    mosaicPosition: {x: 283, y: 3620}
+    spriteID: f9facd527f457a242860250b7d5f0f63
+    layerID: 15
+    mosaicPosition: {x: 1996, y: 2308}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -487,9 +575,9 @@ ScriptedImporter:
     spriteName: Leaf2
     isGroup: 0
     parentIndex: -1
-    spriteID: 9fd6c3833811c854693d7457cf18b987
-    layerID: 10
-    mosaicPosition: {x: 4, y: 3620}
+    spriteID: 02484e95146fd1449a382ef7129d489b
+    layerID: 14
+    mosaicPosition: {x: 1677, y: 3658}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -497,9 +585,9 @@ ScriptedImporter:
     spriteName: Leaf3
     isGroup: 0
     parentIndex: -1
-    spriteID: cfa3db91f55876042842f7bde53985ee
-    layerID: 9
-    mosaicPosition: {x: 4, y: 3032}
+    spriteID: 9fd6c3833811c854693d7457cf18b987
+    layerID: 13
+    mosaicPosition: {x: 1450, y: 3202}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -507,9 +595,9 @@ ScriptedImporter:
     spriteName: Leaf4
     isGroup: 0
     parentIndex: -1
-    spriteID: b313027183dc57c4c9a3a2f1d164068f
-    layerID: 8
-    mosaicPosition: {x: 283, y: 3863}
+    spriteID: cfa3db91f55876042842f7bde53985ee
+    layerID: 12
+    mosaicPosition: {x: 1996, y: 2551}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -517,9 +605,19 @@ ScriptedImporter:
     spriteName: Leaf5
     isGroup: 0
     parentIndex: -1
-    spriteID: 9b96dca8f19751344a4d50352651ac51
-    layerID: 7
-    mosaicPosition: {x: 1615, y: 1032}
+    spriteID: b313027183dc57c4c9a3a2f1d164068f
+    layerID: 11
+    mosaicPosition: {x: 1996, y: 2784}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Sides
+    spriteName: Sides
+    isGroup: 0
+    parentIndex: -1
+    spriteID: c25eb5ae8a3008a45bed0fa3d1120a3a
+    layerID: 10
+    mosaicPosition: {x: 4, y: 4}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -527,9 +625,9 @@ ScriptedImporter:
     spriteName: Cloud1
     isGroup: 0
     parentIndex: -1
-    spriteID: 9047895b4145e774baeece26ff88574c
-    layerID: 6
-    mosaicPosition: {x: 1423, y: 2054}
+    spriteID: 9b96dca8f19751344a4d50352651ac51
+    layerID: 9
+    mosaicPosition: {x: 1318, y: 3658}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -537,19 +635,29 @@ ScriptedImporter:
     spriteName: Cloud2
     isGroup: 0
     parentIndex: -1
-    spriteID: c72f088ab643fcf4585db5646594a344
-    layerID: 5
-    mosaicPosition: {x: 4, y: 3394}
+    spriteID: 9047895b4145e774baeece26ff88574c
+    layerID: 8
+    mosaicPosition: {x: 1996, y: 2082}
     flatten: 0
     isImported: 1
     isVisible: 1
-  - name: Water
-    spriteName: Water
+  - name: Cloud3
+    spriteName: Cloud3
     isGroup: 0
     parentIndex: -1
-    spriteID: 7f9b639d8272b58408f9f9024891585d
-    layerID: 4
-    mosaicPosition: {x: 4, y: 4}
+    spriteID: 3aa595b26a4efce41b002d63dc61e54f
+    layerID: 7
+    mosaicPosition: {x: 1996, y: 1029}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: TreesBackground
+    spriteName: TreesBackground
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 0049a591d255a064da13ecaa672835a0
+    layerID: 6
+    mosaicPosition: {x: 4, y: 3202}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -557,9 +665,9 @@ ScriptedImporter:
     spriteName: SkyBackground
     isGroup: 0
     parentIndex: -1
-    spriteID: 28241d9b7d20cb24a91448aee8df0bd1
-    layerID: 3
-    mosaicPosition: {x: 4, y: 1032}
+    spriteID: c6e7a602ded72d040bcb3c69e4485354
+    layerID: 5
+    mosaicPosition: {x: 4, y: 2164}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -567,9 +675,29 @@ ScriptedImporter:
     spriteName: FrontStone
     isGroup: 0
     parentIndex: -1
-    spriteID: 0049a591d255a064da13ecaa672835a0
+    spriteID: 28241d9b7d20cb24a91448aee8df0bd1
+    layerID: 4
+    mosaicPosition: {x: 571, y: 3658}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Waterfall
+    spriteName: Waterfall
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 1b3a82f3a8c1e104199af9f0d4ac76c9
+    layerID: 3
+    mosaicPosition: {x: 571, y: 3927}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Water
+    spriteName: Water
+    isGroup: 0
+    parentIndex: -1
+    spriteID: c72f088ab643fcf4585db5646594a344
     layerID: 2
-    mosaicPosition: {x: 676, y: 2054}
+    mosaicPosition: {x: 1996, y: 4}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -582,7 +710,7 @@ ScriptedImporter:
     mosaicPosition: {x: 4, y: 4}
     flatten: 0
     isImported: 0
-    isVisible: 1
+    isVisible: 0
   mosaicPSDLayers: []
   rigPSDLayers: []
   sharedRigPSDLayers: []

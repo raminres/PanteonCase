@@ -1,43 +1,44 @@
-# Panteon Case Working Skills
+# Panteon Case Working Playbook
 
-This file is a project playbook, not a list of installed tools. Use it to keep manual and assisted work consistent.
+This is a project workflow reference, not a list of installed tools. Use it with [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) so that assisted work remains reversible and consistent with the user’s manual art work.
 
-## Layer extraction and masking
+## Composition and source art
 
-Use a non-destructive image editor workflow. Export visible layers as transparent PNGs with a shared canvas size and origin. Make dedicated grayscale/alpha masks for gold, water, foam/ripples, and selected wind-animated foliage. Verify a static reassembly before importing into Unity.
+- Preserve `Assets/Sprites/TechnicalArtStageAsset.png` as immutable source art.
+- Use transparent, same-canvas-size exports for independently animated visual layers.
+- Reassemble all exported layers at 100% opacity before adding motion.
+- Keep the Canvas in Screen Space Overlay unless a feature genuinely requires another render mode. Cameras cannot hide Overlay UI.
 
-## uGUI composition
+## UI shader rules
 
-Use a Screen Space Overlay Canvas unless a specific requirement needs another mode. Configure Canvas Scaler for `Scale With Screen Size`, a 1080 x 1920 reference resolution, and a documented match setting. Keep visual layers as clearly named `Image` children of one prefab root, ordered explicitly in the hierarchy.
+- Keep custom effects unlit, commented HLSL and retain uGUI tint, clipping, stencil, and alpha-clip support.
+- Prefer artist-authored masks and slow UV motion to camera textures, screen grabs, blur, or true scene refraction.
+- Count texture samples and transparent area before calling an effect mobile-friendly. No device profiling claim without evidence.
+- Keep a static visual fallback and an effect enable path for each completed effect.
 
-## UI shader implementation
+## Current packed water-mask convention
 
-Start from a minimal URP-compatible UI shader and retain support for `Image` tint/alpha. Keep texture samples sparse and use `_Time` or one controller-provided time value for animation. Use masks to constrain movement and highlight effects. Check clipping/masking behavior if `RectMask2D` is used.
+`Assets/Textures/TX_CausticsWavesWaterFoam_Mask.png` uses:
 
-For this case, make "refraction" a gentle, local UV distortion of the already supplied art; do not reach for a screen-color texture or full-screen blur. That is both more reliable in Canvas UI and substantially friendlier to mobile GPUs.
+- R — caustic pattern;
+- G — low-frequency wave/height noise;
+- B — final pool coverage;
+- A — foam placement.
 
-## Effects
+The current water shader is exploratory. It self-distorts the Water Image, so it cannot show believable reflected/refracted neighbouring art. For that effect, provide a deliberate source layer/texture behind the water rather than adding a camera grab.
 
-- **Water:** slow UV flow, very small normal/noise offset, a moving reflection band, and separate foam/ripple motion. Keep it readable rather than physically realistic.
-- **Sky/clouds:** barely perceptible drift or parallax; use long loops and low contrast.
-- **Foliage:** separate only a handful of leaves/vines and animate from convincing pivots. Vary phase and amplitude slightly.
-- **Gold shine:** mask a soft diagonal gradient sweep to the gold layer. Expose color, intensity, width, angle, speed, softness, and interval.
+## Controller and UI practices
 
-## Controller design
+- Keep `StylizedSceneController` as the one root configuration point.
+- Bind UI controls in `OnEnable` and unbind in `OnDisable`; avoid duplicated listeners.
+- Cache shader property IDs and animator hashes. Do not allocate or look up components every frame.
+- The Save button currently persists only the statue-shine material, in Editor Play Mode. It must not be represented as a general runtime save system.
 
-Use one `StylizedSceneController` on the prefab root. It coordinates enable flags and shared timing, owns references explicitly, and exposes grouped parameters. Cache references in `Awake`/`OnEnable`; do not perform lookup work every frame. Avoid global state so multiple prefab instances can coexist.
+## Validation order
 
-## Profiling and validation
-
-After every major effect, check:
-
-1. Game view at 1080 x 1920 and 1536 x 2048.
-2. Unity Stats and Frame Debugger for added draw calls/material splits.
-3. Alpha overdraw risk from large transparent UI layers.
-4. Whether pausing/disabling an effect returns the art to its intended static state.
-
-Record the evidence and decisions in the project README. Avoid claims about mobile performance until they are backed by the project’s own measurements.
-
-## Submission readiness
-
-Before packaging, test the prefab in a clean Unity 6.3.23f1 URP project. Include the demo scene, prefab, layers/masks required at runtime, materials, shaders, scripts, and concise documentation. Produce a short capture of the animated scene and preserve Frame Debugger screenshots/notes for the technical explanation.
+1. Check the static art match.
+2. Review the effect visually in Play Mode on the authored scene.
+3. Test 1080 x 1920 and 1536 x 2048.
+4. Check Stats, Frame Debugger, and alpha-overdraw risk.
+5. Test the device-specific path, especially iOS RenderTexture output for rain.
+6. Record observed results in the README/handoff before calling the work complete.
