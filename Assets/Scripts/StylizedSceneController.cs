@@ -1,6 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 /// <summary>
 /// Root-level configuration and UI binding point for the stylized jungle scene.
 /// This pass owns the statue-gold shine; future water, foliage, VFX, and Animator
@@ -34,6 +38,10 @@ public sealed class StylizedSceneController : MonoBehaviour
 
     [Tooltip("On-screen slider with a range of 0.001 to 0.25.")]
     [SerializeField] private Slider statueGoldShineSoftnessSlider;
+
+    [Header("Authoring Save")]
+    [Tooltip("Saves the current shine-material values to disk when clicked in Play mode. This action is editor-only and is omitted from player builds.")]
+    [SerializeField] private Button saveSettingsButton;
 
     // These values are intentionally not serialized. The material is their authored fallback,
     // while the on-screen controls are the player-facing source of adjustment.
@@ -145,6 +153,11 @@ public sealed class StylizedSceneController : MonoBehaviour
         {
             statueGoldShineSoftnessSlider.onValueChanged.AddListener(SetStatueGoldShineSoftness);
         }
+
+        if (saveSettingsButton != null)
+        {
+            saveSettingsButton.onClick.AddListener(SaveStatueGoldShineMaterial);
+        }
     }
 
     private void UnbindStatueGoldShineControls()
@@ -167,6 +180,11 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (statueGoldShineSoftnessSlider != null)
         {
             statueGoldShineSoftnessSlider.onValueChanged.RemoveListener(SetStatueGoldShineSoftness);
+        }
+
+        if (saveSettingsButton != null)
+        {
+            saveSettingsButton.onClick.RemoveListener(SaveStatueGoldShineMaterial);
         }
     }
 
@@ -219,5 +237,32 @@ public sealed class StylizedSceneController : MonoBehaviour
         Color appliedColor = statueGoldShineColor;
         appliedColor.a = statueGoldShineEnabled ? appliedColor.a : 0f;
         statueGoldShineMaterial.SetColor(ShineColorId, appliedColor);
+    }
+
+    /// <summary>
+    /// Persists the current material state while previewing in the Unity Editor.
+    /// Runtime slider adjustments are otherwise discarded when Play mode ends.
+    /// </summary>
+    public void SaveStatueGoldShineMaterial()
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("The shine material can only be saved from Play mode.", this);
+            return;
+        }
+
+        if (statueGoldShineMaterial == null)
+        {
+            Debug.LogWarning("Cannot save the shine material because no material is assigned.", this);
+            return;
+        }
+
+        EditorUtility.SetDirty(statueGoldShineMaterial);
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Saved shine settings to '{AssetDatabase.GetAssetPath(statueGoldShineMaterial)}'.", this);
+#else
+        Debug.LogWarning("Saving authoring material settings is available only in the Unity Editor.", this);
+#endif
     }
 }
