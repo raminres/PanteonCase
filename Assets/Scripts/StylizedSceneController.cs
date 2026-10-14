@@ -18,6 +18,7 @@ public sealed class StylizedSceneController : MonoBehaviour
     private static readonly int ShineSpeedId = Shader.PropertyToID("_ShineSpeed");
     private static readonly int ShineWidthId = Shader.PropertyToID("_ShineWidth");
     private static readonly int ShineSoftnessId = Shader.PropertyToID("_ShineSoftness");
+    private static readonly int CloudSpeedId = Animator.StringToHash("Speed");
 
     [Header("Statue Gold Shine")]
     [Tooltip("Shared material used by the CatStatueShine UI Image. The controller updates this existing material and never creates runtime material instances.")]
@@ -39,6 +40,13 @@ public sealed class StylizedSceneController : MonoBehaviour
     [Tooltip("On-screen slider with a range of 0.001 to 0.25.")]
     [SerializeField] private Slider statueGoldShineSoftnessSlider;
 
+    [Header("Cloud Movement UI Bindings")]
+    [Tooltip("Animator on the Clouds parent. Its controller must expose a Float parameter named 'Speed'.")]
+    [SerializeField] private Animator cloudAnimator;
+
+    [Tooltip("On-screen slider that controls the Clouds Animator's Speed parameter. The current UI range is -1 to 1, where 0 pauses the motion.")]
+    [SerializeField] private Slider cloudSpeedSlider;
+
     [Header("Authoring Save")]
     [Tooltip("Saves the current shine-material values to disk when clicked in Play mode. This action is editor-only and is omitted from player builds.")]
     [SerializeField] private Button saveSettingsButton;
@@ -50,6 +58,7 @@ public sealed class StylizedSceneController : MonoBehaviour
     private float statueGoldShineSpeed;
     private float statueGoldShineWidth;
     private float statueGoldShineSoftness;
+    private float cloudAnimationSpeed;
 
     private void OnEnable()
     {
@@ -57,11 +66,14 @@ public sealed class StylizedSceneController : MonoBehaviour
         ApplyStatueGoldShine();
         SynchronizeStatueGoldShineControls();
         BindStatueGoldShineControls();
+        InitializeCloudMovement();
+        BindCloudMovementControls();
     }
 
     private void OnDisable()
     {
         UnbindStatueGoldShineControls();
+        UnbindCloudMovementControls();
     }
 
     private void OnValidate()
@@ -99,6 +111,20 @@ public sealed class StylizedSceneController : MonoBehaviour
     {
         statueGoldShineSoftness = Mathf.Clamp(softness, 0.001f, 0.25f);
         ApplyStatueGoldShine();
+    }
+
+    /// <summary>
+    /// Updates the authored Animator float parameter from the on-screen cloud-speed slider.
+    /// Negative values intentionally support reversed cloud motion; zero pauses it.
+    /// </summary>
+    public void SetCloudAnimationSpeed(float speed)
+    {
+        cloudAnimationSpeed = Mathf.Clamp(speed, -1f, 1f);
+
+        if (cloudAnimator != null)
+        {
+            cloudAnimator.SetFloat(CloudSpeedId, cloudAnimationSpeed);
+        }
     }
 
     /// <summary>Sets the highlight intensity without changing its RGB tint.</summary>
@@ -185,6 +211,36 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (saveSettingsButton != null)
         {
             saveSettingsButton.onClick.RemoveListener(SaveStatueGoldShineMaterial);
+        }
+    }
+
+    private void InitializeCloudMovement()
+    {
+        // The slider is the initial authoring source, so its saved UI value is respected
+        // when entering Play mode instead of being overwritten by the Animator default.
+        if (cloudSpeedSlider != null)
+        {
+            cloudAnimationSpeed = Mathf.Clamp(cloudSpeedSlider.value, -1f, 1f);
+        }
+
+        SetCloudAnimationSpeed(cloudAnimationSpeed);
+    }
+
+    private void BindCloudMovementControls()
+    {
+        UnbindCloudMovementControls();
+
+        if (cloudSpeedSlider != null)
+        {
+            cloudSpeedSlider.onValueChanged.AddListener(SetCloudAnimationSpeed);
+        }
+    }
+
+    private void UnbindCloudMovementControls()
+    {
+        if (cloudSpeedSlider != null)
+        {
+            cloudSpeedSlider.onValueChanged.RemoveListener(SetCloudAnimationSpeed);
         }
     }
 
