@@ -22,11 +22,14 @@ public sealed class StylizedSceneController : MonoBehaviour
     private static readonly int WaterfallNoiseStrengthId = Shader.PropertyToID("_NoiseStrength");
     private static readonly int WaterfallOpacityId = Shader.PropertyToID("_Opacity");
     private static readonly int WaterfallFoamAmountId = Shader.PropertyToID("_FoamAmount");
+    private static readonly int LeafWindStrengthId = Shader.PropertyToID("_WindStrength");
+    private static readonly int LeafWindSpeedId = Shader.PropertyToID("_WindSpeed");
+    private static readonly int LeafAnchorFalloffId = Shader.PropertyToID("_AnchorFalloff");
     private static readonly int CloudSpeedId = Animator.StringToHash("Speed");
     private const float MaxRainEmissionRate = 30f;
     private const float RainCloudMinimumValue = 0.7f;
     private const float MinWaterfallImageWidth = 64f;
-    private const float MaxWaterfallImageWidth = 1024f;
+    private const float MaxWaterfallImageWidth = 512f;
 
     [Header("Statue Gold Shine")]
     [Tooltip("Shared material used by the CatStatueShine UI Image. The controller updates this existing material and never creates runtime material instances.")]
@@ -72,8 +75,23 @@ public sealed class StylizedSceneController : MonoBehaviour
     [Tooltip("Shared material using Panteon/UI/Stylized Waterfall. The controller updates this material directly and never creates runtime instances.")]
     [SerializeField] private Material waterfallMaterial;
 
-    [Tooltip("Optional slider with a recommended range of 64 to 1024 pixels.")]
+    [Tooltip("Optional shared width slider. A 0 to 1 range is recommended; legacy pixel ranges are normalized automatically.")]
     [SerializeField] private Slider waterfallImageWidthSlider;
+
+    [Header("Waterfall Linked Width Targets")]
+    [Tooltip("The sliced CatStatue Image that scales horizontally with the normalized waterfall-width control.")]
+    [SerializeField] private RectTransform waterfallCatStatueRectTransform;
+
+    [Tooltip("CatStatue width in pixels when the waterfall-width control is at 1.")]
+    [SerializeField, Min(0f)] private float waterfallCatStatueMaximumWidth = 333f;
+
+    [Tooltip("Box-shaped foam Particle System that scales horizontally with the normalized waterfall-width control.")]
+    [SerializeField] private ParticleSystem waterfallFoamParticleSystem;
+
+    [Tooltip("Foam Particle System Shape-module X scale when the waterfall-width control is at 1.")]
+    [SerializeField, Min(0f)] private float waterfallFoamParticleMaximumBoxWidth = 8f;
+
+    [Header("Waterfall Material UI Bindings")]
 
     [Tooltip("Optional slider with a range of -2 to 2, matching the waterfall shader's Wave Speed property.")]
     [SerializeField] private Slider waterfallWaveSpeedSlider;
@@ -86,6 +104,19 @@ public sealed class StylizedSceneController : MonoBehaviour
 
     [Tooltip("Optional slider with a range of 0 to 1, matching the waterfall shader's Foam Amount property.")]
     [SerializeField] private Slider waterfallFoamAmountSlider;
+
+    [Header("Leaf Wind UI Bindings")]
+    [Tooltip("Shared MT_SwayingLeaf material. The controller updates it directly and never creates runtime material instances.")]
+    [SerializeField] private Material swayingLeafMaterial;
+
+    [Tooltip("Slider controlling the leaf shader's Body Bend Strength property. Its configured UI range is respected.")]
+    [SerializeField] private Slider leafWindBendStrengthSlider;
+
+    [Tooltip("Slider controlling the leaf shader's Wind Speed property. Its configured UI range is respected.")]
+    [SerializeField] private Slider leafWindSpeedSlider;
+
+    [Tooltip("Slider controlling the leaf shader's Base Anchor Falloff property. Its configured UI range is respected.")]
+    [SerializeField] private Slider leafWindAnchorFalloffSlider;
 
     [Header("Authoring Save")]
     [Tooltip("Saves the current shine-material values to disk when clicked in Play mode. This action is editor-only and is omitted from player builds.")]
@@ -102,10 +133,14 @@ public sealed class StylizedSceneController : MonoBehaviour
     private Color rainCloudBaseColor;
     private bool rainCloudBaseColorCaptured;
     private float waterfallImageWidth;
+    private float waterfallWidthNormalized;
     private float waterfallWaveSpeed;
     private float waterfallPulseNoiseStrength;
     private float waterfallOpacity;
     private float waterfallFoamAmount;
+    private float leafWindBendStrength;
+    private float leafWindSpeed;
+    private float leafWindAnchorFalloff;
 
     private void OnEnable()
     {
@@ -119,6 +154,8 @@ public sealed class StylizedSceneController : MonoBehaviour
         BindRainControls();
         InitializeWaterfall();
         BindWaterfallControls();
+        InitializeLeafWind();
+        BindLeafWindControls();
     }
 
     private void OnDisable()
@@ -127,6 +164,7 @@ public sealed class StylizedSceneController : MonoBehaviour
         UnbindCloudMovementControls();
         UnbindRainControls();
         UnbindWaterfallControls();
+        UnbindLeafWindControls();
     }
 
     private void OnValidate()
@@ -218,14 +256,45 @@ public sealed class StylizedSceneController : MonoBehaviour
         rainCloudImage.color = rainTint;
     }
 
-    /// <summary>Sets the Waterfall Image width without changing its height or anchors.</summary>
-    public void SetWaterfallImageWidth(float width)
+    /// <summary>
+    /// Maps the configured waterfall-width slider to 0..1, then updates every linked width.
+    /// The slider may use either a 0..1 authoring range or its older pixel-based range.
+    /// </summary>
+    public void SetWaterfallImageWidth(float sliderValue)
     {
-        waterfallImageWidth = Mathf.Clamp(width, MinWaterfallImageWidth, MaxWaterfallImageWidth);
+        float normalizedWidth = waterfallImageWidthSlider != null
+            ? Mathf.InverseLerp(waterfallImageWidthSlider.minValue, waterfallImageWidthSlider.maxValue, sliderValue)
+            : Mathf.InverseLerp(MinWaterfallImageWidth, MaxWaterfallImageWidth, sliderValue);
+
+        SetWaterfallWidthNormalized(normalizedWidth);
+    }
+
+    /// <summary>
+    /// Direct 0..1 callback for a normalized waterfall-width slider. At 1, the waterfall,
+    /// CatStatue, and foam box use their configured maximum widths.
+    /// </summary>
+    public void SetWaterfallWidthNormalized(float normalizedWidth)
+    {
+        waterfallWidthNormalized = Mathf.Clamp01(normalizedWidth);
+        waterfallImageWidth = Mathf.Lerp(MinWaterfallImageWidth, MaxWaterfallImageWidth, waterfallWidthNormalized);
 
         if (waterfallImageRectTransform != null)
         {
             waterfallImageRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, waterfallImageWidth);
+        }
+
+        if (waterfallCatStatueRectTransform != null)
+        {
+            float statueWidth = waterfallCatStatueMaximumWidth * waterfallWidthNormalized;
+            waterfallCatStatueRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, statueWidth);
+        }
+
+        if (waterfallFoamParticleSystem != null)
+        {
+            ParticleSystem.ShapeModule shape = waterfallFoamParticleSystem.shape;
+            Vector3 shapeScale = shape.scale;
+            shapeScale.x = waterfallFoamParticleMaximumBoxWidth * waterfallWidthNormalized;
+            shape.scale = shapeScale;
         }
     }
 
@@ -255,6 +324,27 @@ public sealed class StylizedSceneController : MonoBehaviour
     {
         waterfallFoamAmount = Mathf.Clamp01(amount);
         ApplyWaterfallMaterialProperties();
+    }
+
+    /// <summary>Sets the shared leaf material's vertex-bend amount.</summary>
+    public void SetLeafWindBendStrength(float strength)
+    {
+        leafWindBendStrength = strength;
+        ApplyLeafWindMaterialProperties();
+    }
+
+    /// <summary>Sets the shared leaf material's wind animation speed.</summary>
+    public void SetLeafWindSpeed(float speed)
+    {
+        leafWindSpeed = speed;
+        ApplyLeafWindMaterialProperties();
+    }
+
+    /// <summary>Sets how strongly each leaf's pivot stays anchored.</summary>
+    public void SetLeafWindAnchorFalloff(float falloff)
+    {
+        leafWindAnchorFalloff = falloff;
+        ApplyLeafWindMaterialProperties();
     }
 
     /// <summary>Sets the highlight intensity without changing its RGB tint.</summary>
@@ -422,8 +512,14 @@ public sealed class StylizedSceneController : MonoBehaviour
                                               MaxWaterfallImageWidth);
         }
 
+        waterfallWidthNormalized = waterfallImageWidthSlider != null
+            ? Mathf.InverseLerp(waterfallImageWidthSlider.minValue,
+                                waterfallImageWidthSlider.maxValue,
+                                waterfallImageWidthSlider.value)
+            : Mathf.InverseLerp(MinWaterfallImageWidth, MaxWaterfallImageWidth, waterfallImageWidth);
+
         ReadWaterfallValuesFromMaterial();
-        SetWaterfallImageWidth(waterfallImageWidth);
+        SetWaterfallWidthNormalized(waterfallWidthNormalized);
         ApplyWaterfallMaterialProperties();
         SynchronizeWaterfallControls();
     }
@@ -486,6 +582,51 @@ public sealed class StylizedSceneController : MonoBehaviour
         }
     }
 
+    private void InitializeLeafWind()
+    {
+        ReadLeafWindValuesFromMaterial();
+        ApplyLeafWindMaterialProperties();
+        SynchronizeLeafWindControls();
+    }
+
+    private void BindLeafWindControls()
+    {
+        UnbindLeafWindControls();
+
+        if (leafWindBendStrengthSlider != null)
+        {
+            leafWindBendStrengthSlider.onValueChanged.AddListener(SetLeafWindBendStrength);
+        }
+
+        if (leafWindSpeedSlider != null)
+        {
+            leafWindSpeedSlider.onValueChanged.AddListener(SetLeafWindSpeed);
+        }
+
+        if (leafWindAnchorFalloffSlider != null)
+        {
+            leafWindAnchorFalloffSlider.onValueChanged.AddListener(SetLeafWindAnchorFalloff);
+        }
+    }
+
+    private void UnbindLeafWindControls()
+    {
+        if (leafWindBendStrengthSlider != null)
+        {
+            leafWindBendStrengthSlider.onValueChanged.RemoveListener(SetLeafWindBendStrength);
+        }
+
+        if (leafWindSpeedSlider != null)
+        {
+            leafWindSpeedSlider.onValueChanged.RemoveListener(SetLeafWindSpeed);
+        }
+
+        if (leafWindAnchorFalloffSlider != null)
+        {
+            leafWindAnchorFalloffSlider.onValueChanged.RemoveListener(SetLeafWindAnchorFalloff);
+        }
+    }
+
     private void SynchronizeStatueGoldShineControls()
     {
         // This keeps the UI in sync without invoking callbacks during setup.
@@ -514,7 +655,10 @@ public sealed class StylizedSceneController : MonoBehaviour
     {
         if (waterfallImageWidthSlider != null)
         {
-            waterfallImageWidthSlider.SetValueWithoutNotify(waterfallImageWidth);
+            float sliderValue = Mathf.Lerp(waterfallImageWidthSlider.minValue,
+                                           waterfallImageWidthSlider.maxValue,
+                                           waterfallWidthNormalized);
+            waterfallImageWidthSlider.SetValueWithoutNotify(sliderValue);
         }
 
         if (waterfallWaveSpeedSlider != null)
@@ -535,6 +679,24 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (waterfallFoamAmountSlider != null)
         {
             waterfallFoamAmountSlider.SetValueWithoutNotify(waterfallFoamAmount);
+        }
+    }
+
+    private void SynchronizeLeafWindControls()
+    {
+        if (leafWindBendStrengthSlider != null)
+        {
+            leafWindBendStrengthSlider.SetValueWithoutNotify(leafWindBendStrength);
+        }
+
+        if (leafWindSpeedSlider != null)
+        {
+            leafWindSpeedSlider.SetValueWithoutNotify(leafWindSpeed);
+        }
+
+        if (leafWindAnchorFalloffSlider != null)
+        {
+            leafWindAnchorFalloffSlider.SetValueWithoutNotify(leafWindAnchorFalloff);
         }
     }
 
@@ -619,6 +781,52 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (waterfallMaterial.HasProperty(WaterfallFoamAmountId))
         {
             waterfallMaterial.SetFloat(WaterfallFoamAmountId, waterfallFoamAmount);
+        }
+    }
+
+    private void ReadLeafWindValuesFromMaterial()
+    {
+        if (swayingLeafMaterial == null)
+        {
+            return;
+        }
+
+        if (swayingLeafMaterial.HasProperty(LeafWindStrengthId))
+        {
+            leafWindBendStrength = swayingLeafMaterial.GetFloat(LeafWindStrengthId);
+        }
+
+        if (swayingLeafMaterial.HasProperty(LeafWindSpeedId))
+        {
+            leafWindSpeed = swayingLeafMaterial.GetFloat(LeafWindSpeedId);
+        }
+
+        if (swayingLeafMaterial.HasProperty(LeafAnchorFalloffId))
+        {
+            leafWindAnchorFalloff = swayingLeafMaterial.GetFloat(LeafAnchorFalloffId);
+        }
+    }
+
+    private void ApplyLeafWindMaterialProperties()
+    {
+        if (swayingLeafMaterial == null)
+        {
+            return;
+        }
+
+        if (swayingLeafMaterial.HasProperty(LeafWindStrengthId))
+        {
+            swayingLeafMaterial.SetFloat(LeafWindStrengthId, leafWindBendStrength);
+        }
+
+        if (swayingLeafMaterial.HasProperty(LeafWindSpeedId))
+        {
+            swayingLeafMaterial.SetFloat(LeafWindSpeedId, leafWindSpeed);
+        }
+
+        if (swayingLeafMaterial.HasProperty(LeafAnchorFalloffId))
+        {
+            swayingLeafMaterial.SetFloat(LeafAnchorFalloffId, leafWindAnchorFalloff);
         }
     }
 

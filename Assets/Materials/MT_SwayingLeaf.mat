@@ -98,7 +98,7 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _AnchorFalloff: 0.81
+    - _AnchorFalloff: 0.5
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
@@ -132,9 +132,9 @@ Material:
     - _StencilWriteMask: 255
     - _Surface: 0
     - _UseUIAlphaClip: 0
-    - _WaveFrequency: 0.582
-    - _WindSpeed: 1.62
-    - _WindStrength: 0.08
+    - _WaveFrequency: 0.528
+    - _WindSpeed: 3
+    - _WindStrength: 0.12
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1

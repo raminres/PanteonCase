@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: MT_Water
-  m_Shader: {fileID: 4800000, guid: 174940a3c4a4e694c9ae66ea8ec27d2f, type: 3}
+  m_Shader: {fileID: 4800000, guid: 9f30aca282f27b347a5df83bddf88e8a, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -68,8 +68,20 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ReflectionTex:
+        m_Texture: {fileID: 2800000, guid: 414e59f84d3017d40ad84b267a9f60ea, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WaterBorderAndNoisesMask:
+        m_Texture: {fileID: 2800000, guid: e93446a0f3df678468107bf6bffba4e3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WaterMask:
+        m_Texture: {fileID: 2800000, guid: 7f9ac9a036043f940be339fc0e522b58, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -92,7 +104,10 @@ Material:
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
+    - _CausticsIntensity: 0.242
+    - _CausticsLerpSpeed: 0.883
     - _CausticsScale: 4
+    - _CausticsSize: 0.32
     - _CausticsSpeed: 0.053
     - _CausticsStrength: 1
     - _ClearCoatMask: 0
@@ -106,6 +121,10 @@ Material:
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
     - _FoamDistortion: 0
+    - _FoamDistortionSize: 10
+    - _FoamDistortionSpeed: 0.002
+    - _FoamDistortionStrength: 0.2
+    - _FoamIntensity: 0.33
     - _FoamNoiseSpeed: 0.055
     - _FoamPulseSpeed: 0.464
     - _FoamStrength: 1
@@ -116,9 +135,12 @@ Material:
     - _Metallic: 0
     - _NormalStrength: 8
     - _OcclusionStrength: 1
+    - _Opacity: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
+    - _ReflectionFadeDepth: 0.65
+    - _ReflectionOpacity: 1
     - _ReflectionStrength: 0.319
     - _ShineAngle: 27.838379
     - _ShineSoftness: 0.001
@@ -140,24 +162,34 @@ Material:
     - _WaterTintStrength: 0.692
     - _WaveSpeed: 0.5
     - _WaveStrength: 0.025
+    - _WavesIntensity: 0.8
+    - _WavesLerpSpeed: 0.728
+    - _WavesMoveSpeed: 0.0444
+    - _WavesSize: 0.45
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _CausticsColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 0.16862746, g: 0.65882355, b: 0.98823535, a: 0.5254902}
+    - _BottomColor: {r: 0.079999946, g: 0.33999994, b: 0.52, a: 1}
+    - _CausticsColor: {r: 0.71383643, g: 1, b: 0.9886208, a: 0.9411765}
+    - _Color: {r: 0.16862738, g: 0.65882355, b: 0.9882353, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
+    - _FoamDistortionDirection: {r: 1, g: 1, b: 0, a: 0}
     - _GradientBottomColor: {r: 0.47450984, g: 0.882353, b: 0.91372555, a: 1}
     - _GradientTopColor: {r: 0.16862746, g: 0.65882355, b: 0.98823535, a: 1}
     - _ReflectionColor: {r: 1, g: 0.80801517, b: 0.4433961, a: 1}
+    - _ReflectionPosition: {r: 0, g: 0.2, b: 0, a: 0}
     - _ShineColor: {r: 1, g: 0.82, b: 0.35, a: 0.65}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SurfaceLightColor: {r: 0, g: 0, b: 0, a: 1}
     - _SurfaceLightDirection: {r: 0, g: 0, b: 0, a: 0}
+    - _TopColor: {r: 0.2999999, g: 0.7, b: 0.76, a: 1}
     - _WaterTint: {r: 0.72, g: 0.92, b: 1, a: 1}
     - _WaveDirection: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _WavesColor: {r: 0.47999996, g: 0.82, b: 0.91, a: 0.7490196}
+    - _WavesMoveDirection: {r: 1, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &5170605124288719889
