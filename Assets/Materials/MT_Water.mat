@@ -104,10 +104,10 @@ Material:
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
-    - _CausticsIntensity: 0.3565322
+    - _CausticsIntensity: 0.25
     - _CausticsLerpSpeed: 0.883
     - _CausticsScale: 4
-    - _CausticsSize: 0.3247002
+    - _CausticsSize: 0.25
     - _CausticsSpeed: 0.053
     - _CausticsStrength: 1
     - _ClearCoatMask: 0
@@ -121,10 +121,10 @@ Material:
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
     - _FoamDistortion: 0
-    - _FoamDistortionSize: 4.296047
-    - _FoamDistortionSpeed: 0.0099995285
+    - _FoamDistortionSize: 0.1
+    - _FoamDistortionSpeed: 0.12215012
     - _FoamDistortionStrength: 0.1658
-    - _FoamIntensity: 0.2
+    - _FoamIntensity: 0.66
     - _FoamNoiseSpeed: 0.055
     - _FoamPulseSpeed: 0.464
     - _FoamStrength: 1
@@ -139,7 +139,7 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _ReflectionFadeDepth: 0.5448924
+    - _ReflectionFadeDepth: 0.6028701
     - _ReflectionOpacity: 1
     - _ReflectionStrength: 0.319
     - _ShineAngle: 27.838379
@@ -162,10 +162,10 @@ Material:
     - _WaterTintStrength: 0.692
     - _WaveSpeed: 0.5
     - _WaveStrength: 0.025
-    - _WavesIntensity: 0.79171705
-    - _WavesLerpSpeed: 0.728
-    - _WavesMoveSpeed: 0.044400003
-    - _WavesSize: 0.35258693
+    - _WavesIntensity: 0.929
+    - _WavesLerpSpeed: 0.922
+    - _WavesMoveSpeed: 0.1104
+    - _WavesSize: 0.38
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
