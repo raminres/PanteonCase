@@ -2,36 +2,45 @@ Shader "Panteon/UI/Stylized Pool Water"
 {
     Properties
     {
-        // Standard uGUI properties. _MainTex is supplied by the Water Image's sprite.
+        // The Image component supplies this sprite. Its alpha is the pool silhouette.
         [PerRendererData] _MainTex ("Water Sprite", 2D) = "white" {}
         _Color ("Image Tint", Color) = (1, 1, 1, 1)
 
-        // Packed, UV-aligned texture: R = caustics, G = wave noise, B = water coverage, A = foam.
-        _MaskTex ("Packed Water Mask (R Caustics, G Waves, B Water, A Foam)", 2D) = "black" {}
+        // Authoring convention: R/G are two caustic states and B/A are two wave states.
+        // The paired channels are blended in time instead of being treated as unrelated noise.
+        _WaterMask ("TX Caustics And Waves Mask (RG Caustics, BA Waves)", 2D) = "black" {}
+        // R is the hand-authored water perimeter and G is the static edge-foam placement.
+        _WaterBorderAndNoisesMask ("TX Water Border And Noises Mask (R Perimeter, G Edge Foam)", 2D) = "black" {}
 
-        // A vertical gradient colourises the retained sprite detail instead of flattening it.
-        _GradientTopColor ("Gradient Top Color", Color) = (0.36, 0.72, 0.74, 1.0)
-        _GradientBottomColor ("Gradient Bottom Color", Color) = (0.10, 0.40, 0.50, 1.0)
-        _GradientStrength ("Gradient Strength", Range(0, 1)) = 0.36
+        _TopColor ("Top Color", Color) = (0.30, 0.70, 0.76, 1)
+        _BottomColor ("Bottom Color", Color) = (0.08, 0.34, 0.52, 1)
+        _Opacity ("Opacity", Range(0, 1)) = 1
 
-        _WaveStrength ("Surface Distortion", Range(0, 0.025)) = 0.003
-        _WaveSpeed ("Wave Speed", Range(0, 0.5)) = 0.035
-        _WaveDirection ("Wave Direction (XY)", Vector) = (0.8, 0.35, 0, 0)
+        // A UV-aligned copy of the scene. It is flipped vertically before being blended into water.
+        _ReflectionTex ("TX Scene Reflection", 2D) = "black" {}
+        _ReflectionOpacity ("Reflection Opacity", Range(0, 1)) = 0.28
+        _ReflectionFadeDepth ("Reflection Fade Depth", Range(0.01, 1)) = 0.65
+        _ReflectionPosition ("Reflection Position (XY)", Vector) = (0, 0, 0, 0)
 
-        // A pseudo normal is reconstructed from the moving G height field for a calm, lit surface.
-        _NormalStrength ("Normal Wave Strength", Range(0, 8)) = 2.0
-        _SurfaceLightDirection ("Surface Light Direction (XYZ)", Vector) = (-0.35, 0.45, 0.82, 0)
-        _SurfaceLightColor ("Surface Light Color", Color) = (0.78, 0.94, 1.0, 1.0)
-        _SurfaceLightStrength ("Surface Light Strength", Range(0, 1)) = 0.16
+        // Size is expressed as an intuitive pattern size: larger values make the pattern larger.
+        _CausticsSize ("Caustics Size", Range(0.25, 4)) = 1
+        _CausticsColor ("Caustics Color", Color) = (0.72, 0.98, 0.95, 1)
+        _CausticsIntensity ("Caustics Intensity", Range(0, 1)) = 0.28
+        _CausticsLerpSpeed ("Caustics Lerp Speed", Range(0, 2)) = 0.20
 
-        _CausticsColor ("Caustics Color (A = Intensity)", Color) = (0.78, 0.98, 0.94, 0.24)
-        _CausticsStrength ("Caustics Strength", Range(0, 1)) = 0.32
-        _CausticsSpeed ("Caustics Speed", Range(0, 0.5)) = 0.045
-        _CausticsScale ("Caustics Scale", Range(0.5, 4)) = 1.35
+        _WavesSize ("Waves Size", Range(0.25, 4)) = 1
+        _WavesColor ("Waves Color", Color) = (0.48, 0.82, 0.91, 1)
+        _WavesIntensity ("Waves Intensity", Range(0, 1)) = 0.20
+        _WavesLerpSpeed ("Waves Lerp Speed", Range(0, 2)) = 0.26
+        _WavesMoveSpeed ("Waves Move Speed", Range(0, 0.2)) = 0.015
+        _WavesMoveDirection ("Waves Move Direction (XY)", Vector) = (1, 0.15, 0, 0)
 
-        _FoamColor ("Foam Color (A = Intensity)", Color) = (0.9, 0.98, 1.0, 0.7)
-        _FoamStrength ("Foam Strength", Range(0, 1)) = 0.65
-        _FoamDistortion ("Foam Noise Distortion", Range(0, 0.05)) = 0.008
+        _FoamColor ("Foam Color", Color) = (0.92, 0.98, 1, 1)
+        _FoamIntensity ("Foam Intensity", Range(0, 3)) = 0.7
+        _FoamDistortionStrength ("Foam Distortion Strength", Range(0, 0.2)) = 0.006
+        _FoamDistortionSpeed ("Foam Distortion Speed", Range(0, 1)) = 0.01
+        _FoamDistortionSize ("Foam Distortion Size", Range(0.1, 10)) = 1
+        _FoamDistortionDirection ("Foam Distortion Direction (XY)", Vector) = (1, 0, 0, 0)
 
         // Standard uGUI stencil, clipping, and alpha-clip properties retain Mask/RectMask2D support.
         _StencilComp ("Stencil Comparison", Float) = 8
@@ -72,7 +81,7 @@ Shader "Panteon/UI/Stylized Pool Water"
 
         Pass
         {
-            Name "StylizedPoolWater"
+            Name "StylizedPoolWaterFoundation"
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -102,26 +111,33 @@ Shader "Panteon/UI/Stylized Pool Water"
             };
 
             sampler2D _MainTex;
-            sampler2D _MaskTex;
+            sampler2D _WaterMask;
+            sampler2D _WaterBorderAndNoisesMask;
+            sampler2D _ReflectionTex;
             fixed4 _Color;
-            fixed4 _GradientTopColor;
-            fixed4 _GradientBottomColor;
-            fixed4 _SurfaceLightColor;
+            fixed4 _TopColor;
+            fixed4 _BottomColor;
             fixed4 _CausticsColor;
+            fixed4 _WavesColor;
+            float _Opacity;
+            float _ReflectionOpacity;
+            float _ReflectionFadeDepth;
+            float4 _ReflectionPosition;
+            float _CausticsSize;
+            float _CausticsIntensity;
+            float _CausticsLerpSpeed;
+            float _WavesSize;
+            float _WavesIntensity;
+            float _WavesLerpSpeed;
+            float _WavesMoveSpeed;
+            float4 _WavesMoveDirection;
             fixed4 _FoamColor;
-            float _GradientStrength;
-            float _WaveStrength;
-            float _WaveSpeed;
-            float4 _WaveDirection;
-            float _NormalStrength;
-            float4 _SurfaceLightDirection;
-            float _SurfaceLightStrength;
-            float _CausticsStrength;
-            float _CausticsSpeed;
-            float _CausticsScale;
-            float _FoamStrength;
-            float _FoamDistortion;
-            float4 _MaskTex_TexelSize;
+            float _FoamIntensity;
+            float _FoamDistortionStrength;
+            float _FoamDistortionSpeed;
+            float _FoamDistortionSize;
+            float4 _FoamDistortionDirection;
+            float4 _WaterBorderAndNoisesMask_TexelSize;
             float4 _ClipRect;
 
             v2f vert(appdata_t v)
@@ -139,59 +155,66 @@ Shader "Panteon/UI/Stylized Pool Water"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                // The static sample keeps B (coverage) and A (painted foam) aligned to the water sprite.
-                // Only the procedural samples below are panned, preventing the pool boundary from swimming.
-                fixed4 packedMask = tex2D(_MaskTex, i.uv);
-                float waterCoverage = packedMask.b;
+                // Keep the source sprite only as a silhouette; the water body is intentionally
+                // recoloured by the artist-facing top-to-bottom gradient.
+                fixed4 source = tex2D(_MainTex, i.uv);
+                float3 waterColor = lerp(_BottomColor.rgb, _TopColor.rgb, saturate(i.uv.y)) * i.color.rgb;
 
-                float2 waveDirection = normalize(_WaveDirection.xy + float2(0.0001, 0.0001));
-                float2 waveUv = frac(i.uv + waveDirection * (_Time.y * _WaveSpeed));
+                // The reflection source is vertically flipped across the water surface. Its UV
+                // position is artist-adjustable, while the depth gradient fades it toward the
+                // lower (deeper) part of the pool. Bounds prevent shifted UVs from smearing an
+                // edge texel across the water when the reflection is repositioned.
+                float2 reflectionUv = float2(i.uv.x, 1.0 - i.uv.y) + _ReflectionPosition.xy;
+                float2 reflectionInBounds = step(float2(0.0, 0.0), reflectionUv) * step(reflectionUv, float2(1.0, 1.0));
+                fixed4 reflection = tex2D(_ReflectionTex, saturate(reflectionUv));
+                float reflectionFade = smoothstep(1.0 - _ReflectionFadeDepth, 1.0, saturate(i.uv.y));
+                float reflectionAmount = reflection.a * reflectionInBounds.x * reflectionInBounds.y * reflectionFade * _ReflectionOpacity;
+                waterColor = lerp(waterColor, reflection.rgb, saturate(reflectionAmount));
 
-                // The G channel is treated as a small height field. Two neighbouring samples form a
-                // pseudo normal; its XY component provides the self-distortion, and its Z keeps it stable.
-                float waveHeight = tex2D(_MaskTex, waveUv).g;
-                float waveHeightX = tex2D(_MaskTex, waveUv + float2(_MaskTex_TexelSize.x, 0.0)).g;
-                float waveHeightY = tex2D(_MaskTex, waveUv + float2(0.0, _MaskTex_TexelSize.y)).g;
-                float2 waveSlope = float2(waveHeight - waveHeightX, waveHeight - waveHeightY);
-                float3 surfaceNormal = normalize(float3(waveSlope * _NormalStrength, 1.0));
-                float2 refractionOffset = surfaceNormal.xy * _WaveStrength;
+                // R/G are two authored caustic snapshots. The sine returns 0..1 so the blend
+                // travels smoothly from R to G and back without introducing a directional pan.
+                float causticsBlend = 0.5 + 0.5 * sin(_Time.y * _CausticsLerpSpeed);
+                float2 causticsUv = frac(i.uv / max(_CausticsSize, 0.0001));
+                float2 causticChannels = tex2D(_WaterMask, causticsUv).rg;
+                float caustics = lerp(causticChannels.r, causticChannels.g, causticsBlend);
+                waterColor = lerp(waterColor, _CausticsColor.rgb, saturate(caustics * _CausticsIntensity));
 
-                // This is deliberately local refraction: the Water sprite samples itself with a tiny UV shift.
-                // It avoids a costly screen grab and remains stable inside a Screen Space Overlay Canvas.
-                fixed4 waterColor = tex2D(_MainTex, i.uv + refractionOffset) * i.color;
-                float3 gradientColor = lerp(_GradientBottomColor.rgb, _GradientTopColor.rgb, saturate(i.uv.y));
-                waterColor.rgb = lerp(waterColor.rgb, waterColor.rgb * gradientColor, _GradientStrength);
+                // B/A use the same two-state blend. Unlike caustics, their lookup receives a
+                // very small directional pan, providing the requested subtle surface movement.
+                float directionLength = max(length(_WavesMoveDirection.xy), 0.0001);
+                float2 waveDirection = _WavesMoveDirection.xy / directionLength;
+                float2 wavesUv = frac(i.uv / max(_WavesSize, 0.0001) + waveDirection * (_Time.y * _WavesMoveSpeed));
+                float wavesBlend = 0.5 + 0.5 * sin(_Time.y * _WavesLerpSpeed);
+                float2 waveChannels = tex2D(_WaterMask, wavesUv).ba;
+                float waves = lerp(waveChannels.x, waveChannels.y, wavesBlend);
+                waterColor = lerp(waterColor, _WavesColor.rgb, saturate(waves * _WavesIntensity));
 
-                // This replaces the former fake reflection. It is directional surface light calculated
-                // from the moving pseudo normal, so highlights follow the apparent shape of the waves.
-                float3 lightDirection = normalize(_SurfaceLightDirection.xyz + float3(0.0001, 0.0001, 0.0001));
-                float surfaceLight = saturate(dot(surfaceNormal, lightDirection));
-                waterColor.rgb += _SurfaceLightColor.rgb * (surfaceLight * _SurfaceLightStrength * waterCoverage);
+                // R and G stay UV-aligned to the painted pool. Only B pans as a height field;
+                // neighbouring samples form a local slope that shifts the G foam lookup, similar
+                // to a lightweight normal map without moving the water boundary.
+                float4 borderAndFoam = tex2D(_WaterBorderAndNoisesMask, i.uv);
+                float foamDirectionLength = max(length(_FoamDistortionDirection.xy), 0.0001);
+                float2 foamDirection = _FoamDistortionDirection.xy / foamDirectionLength;
+                float2 distortionUv = frac(i.uv / max(_FoamDistortionSize, 0.0001) + foamDirection * (_Time.y * _FoamDistortionSpeed));
+                float foamNoise = tex2D(_WaterBorderAndNoisesMask, distortionUv).b;
+                float noiseX = tex2D(_WaterBorderAndNoisesMask, distortionUv + float2(_WaterBorderAndNoisesMask_TexelSize.x, 0.0)).b;
+                float noiseY = tex2D(_WaterBorderAndNoisesMask, distortionUv + float2(0.0, _WaterBorderAndNoisesMask_TexelSize.y)).b;
+                float2 foamSlope = float2(foamNoise - noiseX, foamNoise - noiseY);
+                float2 foamUv = saturate(i.uv + foamSlope * _FoamDistortionStrength);
+                float foam = tex2D(_WaterBorderAndNoisesMask, foamUv).g;
+                waterColor = lerp(waterColor, _FoamColor.rgb, saturate(foam * _FoamIntensity));
 
-                // Red contains the hand-authored caustic pattern. It drifts independently of the static mask.
-                float2 causticsUv = frac(i.uv * _CausticsScale + waveDirection * (_Time.y * _CausticsSpeed));
-                float caustics = tex2D(_MaskTex, causticsUv).r;
-                waterColor.rgb += _CausticsColor.rgb * (caustics * _CausticsStrength * _CausticsColor.a * waterCoverage);
-
-                // Alpha contains artist-placed foam. The same G noise now offsets its lookup, making the
-                // foam gently drift and break up while B still locks the water boundary in place.
-                float foamNoise = waveHeight * 2.0 - 1.0;
-                float2 foamOffset = float2(foamNoise, -foamNoise) * _FoamDistortion;
-                float foam = tex2D(_MaskTex, i.uv + foamOffset).a * _FoamStrength * _FoamColor.a;
-                waterColor.rgb = lerp(waterColor.rgb, _FoamColor.rgb, saturate(foam));
-
-                // The blue water mask is the final boundary. Transparent pixels outside the pool stay invisible.
-                waterColor.a *= waterCoverage;
+                fixed4 result = fixed4(waterColor, source.a * borderAndFoam.r * i.color.a * _Opacity);
 
                 #ifdef UNITY_UI_CLIP_RECT
-                waterColor.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
+                result.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
                 #endif
 
                 #ifdef UNITY_UI_ALPHACLIP
-                clip(waterColor.a - 0.001);
+                clip(result.a - 0.001);
                 #endif
 
-                return waterColor;
+                return result;
             }
             ENDHLSL
         }

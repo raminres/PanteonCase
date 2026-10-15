@@ -25,6 +25,17 @@ public sealed class StylizedSceneController : MonoBehaviour
     private static readonly int LeafWindStrengthId = Shader.PropertyToID("_WindStrength");
     private static readonly int LeafWindSpeedId = Shader.PropertyToID("_WindSpeed");
     private static readonly int LeafAnchorFalloffId = Shader.PropertyToID("_AnchorFalloff");
+    private static readonly int PoolWaterOpacityId = Shader.PropertyToID("_Opacity");
+    private static readonly int PoolWaterReflectionOpacityId = Shader.PropertyToID("_ReflectionOpacity");
+    private static readonly int PoolWaterReflectionFadeDepthId = Shader.PropertyToID("_ReflectionFadeDepth");
+    private static readonly int PoolWaterCausticsSizeId = Shader.PropertyToID("_CausticsSize");
+    private static readonly int PoolWaterCausticsIntensityId = Shader.PropertyToID("_CausticsIntensity");
+    private static readonly int PoolWaterWavesSizeId = Shader.PropertyToID("_WavesSize");
+    private static readonly int PoolWaterWavesIntensityId = Shader.PropertyToID("_WavesIntensity");
+    private static readonly int PoolWaterWavesMoveSpeedId = Shader.PropertyToID("_WavesMoveSpeed");
+    private static readonly int PoolWaterFoamIntensityId = Shader.PropertyToID("_FoamIntensity");
+    private static readonly int PoolWaterFoamDistortionSpeedId = Shader.PropertyToID("_FoamDistortionSpeed");
+    private static readonly int PoolWaterFoamDistortionSizeId = Shader.PropertyToID("_FoamDistortionSize");
     private static readonly int CloudSpeedId = Animator.StringToHash("Speed");
     private const float MaxRainEmissionRate = 30f;
     private const float RainCloudMinimumValue = 0.7f;
@@ -118,8 +129,45 @@ public sealed class StylizedSceneController : MonoBehaviour
     [Tooltip("Slider controlling the leaf shader's Base Anchor Falloff property. Its configured UI range is respected.")]
     [SerializeField] private Slider leafWindAnchorFalloffSlider;
 
+    [Header("Pool Water UI Bindings")]
+    [Tooltip("Shared MT_Water material using Panteon/UI/Stylized Pool Water Foundation. The controller updates it directly and never creates runtime material instances.")]
+    [SerializeField] private Material poolWaterMaterial;
+
+    [Tooltip("Slider controlling the pool water's overall opacity. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterOpacitySlider;
+
+    [Tooltip("Slider controlling the reflected scene opacity. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterReflectionOpacitySlider;
+
+    [Tooltip("Slider controlling how far the reflection fade extends into the water. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterReflectionFadeDepthSlider;
+
+    [Tooltip("Slider controlling caustic pattern size. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterCausticsSizeSlider;
+
+    [Tooltip("Slider controlling caustic intensity. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterCausticsIntensitySlider;
+
+    [Tooltip("Slider controlling wave pattern size. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterWavesSizeSlider;
+
+    [Tooltip("Slider controlling wave intensity. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterWavesIntensitySlider;
+
+    [Tooltip("Slider controlling wave movement speed. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterWavesMoveSpeedSlider;
+
+    [Tooltip("Slider controlling edge-foam intensity. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterFoamIntensitySlider;
+
+    [Tooltip("Slider controlling foam-distortion speed. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterFoamDistortionSpeedSlider;
+
+    [Tooltip("Slider controlling foam-distortion pattern size. Its configured UI range is respected.")]
+    [SerializeField] private Slider poolWaterFoamDistortionSizeSlider;
+
     [Header("Authoring Save")]
-    [Tooltip("Saves the current shine-material values to disk when clicked in Play mode. This action is editor-only and is omitted from player builds.")]
+    [Tooltip("Saves all controller-managed material values to disk when clicked in Play mode. This action is editor-only and is omitted from player builds.")]
     [SerializeField] private Button saveSettingsButton;
 
     // These values are intentionally not serialized. The material is their authored fallback,
@@ -141,6 +189,17 @@ public sealed class StylizedSceneController : MonoBehaviour
     private float leafWindBendStrength;
     private float leafWindSpeed;
     private float leafWindAnchorFalloff;
+    private float poolWaterOpacity;
+    private float poolWaterReflectionOpacity;
+    private float poolWaterReflectionFadeDepth;
+    private float poolWaterCausticsSize;
+    private float poolWaterCausticsIntensity;
+    private float poolWaterWavesSize;
+    private float poolWaterWavesIntensity;
+    private float poolWaterWavesMoveSpeed;
+    private float poolWaterFoamIntensity;
+    private float poolWaterFoamDistortionSpeed;
+    private float poolWaterFoamDistortionSize;
 
     private void OnEnable()
     {
@@ -156,6 +215,8 @@ public sealed class StylizedSceneController : MonoBehaviour
         BindWaterfallControls();
         InitializeLeafWind();
         BindLeafWindControls();
+        InitializePoolWater();
+        BindPoolWaterControls();
     }
 
     private void OnDisable()
@@ -165,6 +226,7 @@ public sealed class StylizedSceneController : MonoBehaviour
         UnbindRainControls();
         UnbindWaterfallControls();
         UnbindLeafWindControls();
+        UnbindPoolWaterControls();
     }
 
     private void OnValidate()
@@ -347,6 +409,72 @@ public sealed class StylizedSceneController : MonoBehaviour
         ApplyLeafWindMaterialProperties();
     }
 
+    public void SetPoolWaterOpacity(float opacity)
+    {
+        poolWaterOpacity = opacity;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterReflectionOpacity(float opacity)
+    {
+        poolWaterReflectionOpacity = opacity;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterReflectionFadeDepth(float fadeDepth)
+    {
+        poolWaterReflectionFadeDepth = fadeDepth;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterCausticsSize(float size)
+    {
+        poolWaterCausticsSize = size;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterCausticsIntensity(float intensity)
+    {
+        poolWaterCausticsIntensity = intensity;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterWavesSize(float size)
+    {
+        poolWaterWavesSize = size;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterWavesIntensity(float intensity)
+    {
+        poolWaterWavesIntensity = intensity;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterWavesMoveSpeed(float speed)
+    {
+        poolWaterWavesMoveSpeed = speed;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterFoamIntensity(float intensity)
+    {
+        poolWaterFoamIntensity = intensity;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterFoamDistortionSpeed(float speed)
+    {
+        poolWaterFoamDistortionSpeed = speed;
+        ApplyPoolWaterMaterialProperties();
+    }
+
+    public void SetPoolWaterFoamDistortionSize(float size)
+    {
+        poolWaterFoamDistortionSize = size;
+        ApplyPoolWaterMaterialProperties();
+    }
+
     /// <summary>Sets the highlight intensity without changing its RGB tint.</summary>
     public void SetStatueGoldShineIntensity(float intensity)
     {
@@ -402,7 +530,7 @@ public sealed class StylizedSceneController : MonoBehaviour
 
         if (saveSettingsButton != null)
         {
-            saveSettingsButton.onClick.AddListener(SaveStatueGoldShineMaterial);
+            saveSettingsButton.onClick.AddListener(SaveControlledMaterialSettings);
         }
     }
 
@@ -430,7 +558,7 @@ public sealed class StylizedSceneController : MonoBehaviour
 
         if (saveSettingsButton != null)
         {
-            saveSettingsButton.onClick.RemoveListener(SaveStatueGoldShineMaterial);
+            saveSettingsButton.onClick.RemoveListener(SaveControlledMaterialSettings);
         }
     }
 
@@ -627,6 +755,131 @@ public sealed class StylizedSceneController : MonoBehaviour
         }
     }
 
+    private void InitializePoolWater()
+    {
+        ReadPoolWaterValuesFromMaterial();
+        ApplyPoolWaterMaterialProperties();
+        SynchronizePoolWaterControls();
+    }
+
+    private void BindPoolWaterControls()
+    {
+        UnbindPoolWaterControls();
+
+        if (poolWaterOpacitySlider != null)
+        {
+            poolWaterOpacitySlider.onValueChanged.AddListener(SetPoolWaterOpacity);
+        }
+
+        if (poolWaterReflectionOpacitySlider != null)
+        {
+            poolWaterReflectionOpacitySlider.onValueChanged.AddListener(SetPoolWaterReflectionOpacity);
+        }
+
+        if (poolWaterReflectionFadeDepthSlider != null)
+        {
+            poolWaterReflectionFadeDepthSlider.onValueChanged.AddListener(SetPoolWaterReflectionFadeDepth);
+        }
+
+        if (poolWaterCausticsSizeSlider != null)
+        {
+            poolWaterCausticsSizeSlider.onValueChanged.AddListener(SetPoolWaterCausticsSize);
+        }
+
+        if (poolWaterCausticsIntensitySlider != null)
+        {
+            poolWaterCausticsIntensitySlider.onValueChanged.AddListener(SetPoolWaterCausticsIntensity);
+        }
+
+        if (poolWaterWavesSizeSlider != null)
+        {
+            poolWaterWavesSizeSlider.onValueChanged.AddListener(SetPoolWaterWavesSize);
+        }
+
+        if (poolWaterWavesIntensitySlider != null)
+        {
+            poolWaterWavesIntensitySlider.onValueChanged.AddListener(SetPoolWaterWavesIntensity);
+        }
+
+        if (poolWaterWavesMoveSpeedSlider != null)
+        {
+            poolWaterWavesMoveSpeedSlider.onValueChanged.AddListener(SetPoolWaterWavesMoveSpeed);
+        }
+
+        if (poolWaterFoamIntensitySlider != null)
+        {
+            poolWaterFoamIntensitySlider.onValueChanged.AddListener(SetPoolWaterFoamIntensity);
+        }
+
+        if (poolWaterFoamDistortionSpeedSlider != null)
+        {
+            poolWaterFoamDistortionSpeedSlider.onValueChanged.AddListener(SetPoolWaterFoamDistortionSpeed);
+        }
+
+        if (poolWaterFoamDistortionSizeSlider != null)
+        {
+            poolWaterFoamDistortionSizeSlider.onValueChanged.AddListener(SetPoolWaterFoamDistortionSize);
+        }
+    }
+
+    private void UnbindPoolWaterControls()
+    {
+        if (poolWaterOpacitySlider != null)
+        {
+            poolWaterOpacitySlider.onValueChanged.RemoveListener(SetPoolWaterOpacity);
+        }
+
+        if (poolWaterReflectionOpacitySlider != null)
+        {
+            poolWaterReflectionOpacitySlider.onValueChanged.RemoveListener(SetPoolWaterReflectionOpacity);
+        }
+
+        if (poolWaterReflectionFadeDepthSlider != null)
+        {
+            poolWaterReflectionFadeDepthSlider.onValueChanged.RemoveListener(SetPoolWaterReflectionFadeDepth);
+        }
+
+        if (poolWaterCausticsSizeSlider != null)
+        {
+            poolWaterCausticsSizeSlider.onValueChanged.RemoveListener(SetPoolWaterCausticsSize);
+        }
+
+        if (poolWaterCausticsIntensitySlider != null)
+        {
+            poolWaterCausticsIntensitySlider.onValueChanged.RemoveListener(SetPoolWaterCausticsIntensity);
+        }
+
+        if (poolWaterWavesSizeSlider != null)
+        {
+            poolWaterWavesSizeSlider.onValueChanged.RemoveListener(SetPoolWaterWavesSize);
+        }
+
+        if (poolWaterWavesIntensitySlider != null)
+        {
+            poolWaterWavesIntensitySlider.onValueChanged.RemoveListener(SetPoolWaterWavesIntensity);
+        }
+
+        if (poolWaterWavesMoveSpeedSlider != null)
+        {
+            poolWaterWavesMoveSpeedSlider.onValueChanged.RemoveListener(SetPoolWaterWavesMoveSpeed);
+        }
+
+        if (poolWaterFoamIntensitySlider != null)
+        {
+            poolWaterFoamIntensitySlider.onValueChanged.RemoveListener(SetPoolWaterFoamIntensity);
+        }
+
+        if (poolWaterFoamDistortionSpeedSlider != null)
+        {
+            poolWaterFoamDistortionSpeedSlider.onValueChanged.RemoveListener(SetPoolWaterFoamDistortionSpeed);
+        }
+
+        if (poolWaterFoamDistortionSizeSlider != null)
+        {
+            poolWaterFoamDistortionSizeSlider.onValueChanged.RemoveListener(SetPoolWaterFoamDistortionSize);
+        }
+    }
+
     private void SynchronizeStatueGoldShineControls()
     {
         // This keeps the UI in sync without invoking callbacks during setup.
@@ -697,6 +950,64 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (leafWindAnchorFalloffSlider != null)
         {
             leafWindAnchorFalloffSlider.SetValueWithoutNotify(leafWindAnchorFalloff);
+        }
+    }
+
+    private void SynchronizePoolWaterControls()
+    {
+        if (poolWaterOpacitySlider != null)
+        {
+            poolWaterOpacitySlider.SetValueWithoutNotify(poolWaterOpacity);
+        }
+
+        if (poolWaterReflectionOpacitySlider != null)
+        {
+            poolWaterReflectionOpacitySlider.SetValueWithoutNotify(poolWaterReflectionOpacity);
+        }
+
+        if (poolWaterReflectionFadeDepthSlider != null)
+        {
+            poolWaterReflectionFadeDepthSlider.SetValueWithoutNotify(poolWaterReflectionFadeDepth);
+        }
+
+        if (poolWaterCausticsSizeSlider != null)
+        {
+            poolWaterCausticsSizeSlider.SetValueWithoutNotify(poolWaterCausticsSize);
+        }
+
+        if (poolWaterCausticsIntensitySlider != null)
+        {
+            poolWaterCausticsIntensitySlider.SetValueWithoutNotify(poolWaterCausticsIntensity);
+        }
+
+        if (poolWaterWavesSizeSlider != null)
+        {
+            poolWaterWavesSizeSlider.SetValueWithoutNotify(poolWaterWavesSize);
+        }
+
+        if (poolWaterWavesIntensitySlider != null)
+        {
+            poolWaterWavesIntensitySlider.SetValueWithoutNotify(poolWaterWavesIntensity);
+        }
+
+        if (poolWaterWavesMoveSpeedSlider != null)
+        {
+            poolWaterWavesMoveSpeedSlider.SetValueWithoutNotify(poolWaterWavesMoveSpeed);
+        }
+
+        if (poolWaterFoamIntensitySlider != null)
+        {
+            poolWaterFoamIntensitySlider.SetValueWithoutNotify(poolWaterFoamIntensity);
+        }
+
+        if (poolWaterFoamDistortionSpeedSlider != null)
+        {
+            poolWaterFoamDistortionSpeedSlider.SetValueWithoutNotify(poolWaterFoamDistortionSpeed);
+        }
+
+        if (poolWaterFoamDistortionSizeSlider != null)
+        {
+            poolWaterFoamDistortionSizeSlider.SetValueWithoutNotify(poolWaterFoamDistortionSize);
         }
     }
 
@@ -830,30 +1141,95 @@ public sealed class StylizedSceneController : MonoBehaviour
         }
     }
 
+    private void ReadPoolWaterValuesFromMaterial()
+    {
+        if (poolWaterMaterial == null)
+        {
+            return;
+        }
+
+        if (poolWaterMaterial.HasProperty(PoolWaterOpacityId)) poolWaterOpacity = poolWaterMaterial.GetFloat(PoolWaterOpacityId);
+        if (poolWaterMaterial.HasProperty(PoolWaterReflectionOpacityId)) poolWaterReflectionOpacity = poolWaterMaterial.GetFloat(PoolWaterReflectionOpacityId);
+        if (poolWaterMaterial.HasProperty(PoolWaterReflectionFadeDepthId)) poolWaterReflectionFadeDepth = poolWaterMaterial.GetFloat(PoolWaterReflectionFadeDepthId);
+        if (poolWaterMaterial.HasProperty(PoolWaterCausticsSizeId)) poolWaterCausticsSize = poolWaterMaterial.GetFloat(PoolWaterCausticsSizeId);
+        if (poolWaterMaterial.HasProperty(PoolWaterCausticsIntensityId)) poolWaterCausticsIntensity = poolWaterMaterial.GetFloat(PoolWaterCausticsIntensityId);
+        if (poolWaterMaterial.HasProperty(PoolWaterWavesSizeId)) poolWaterWavesSize = poolWaterMaterial.GetFloat(PoolWaterWavesSizeId);
+        if (poolWaterMaterial.HasProperty(PoolWaterWavesIntensityId)) poolWaterWavesIntensity = poolWaterMaterial.GetFloat(PoolWaterWavesIntensityId);
+        if (poolWaterMaterial.HasProperty(PoolWaterWavesMoveSpeedId)) poolWaterWavesMoveSpeed = poolWaterMaterial.GetFloat(PoolWaterWavesMoveSpeedId);
+        if (poolWaterMaterial.HasProperty(PoolWaterFoamIntensityId)) poolWaterFoamIntensity = poolWaterMaterial.GetFloat(PoolWaterFoamIntensityId);
+        if (poolWaterMaterial.HasProperty(PoolWaterFoamDistortionSpeedId)) poolWaterFoamDistortionSpeed = poolWaterMaterial.GetFloat(PoolWaterFoamDistortionSpeedId);
+        if (poolWaterMaterial.HasProperty(PoolWaterFoamDistortionSizeId)) poolWaterFoamDistortionSize = poolWaterMaterial.GetFloat(PoolWaterFoamDistortionSizeId);
+    }
+
+    private void ApplyPoolWaterMaterialProperties()
+    {
+        if (poolWaterMaterial == null)
+        {
+            return;
+        }
+
+        // Each guard keeps this controller safe if the water material is temporarily swapped.
+        if (poolWaterMaterial.HasProperty(PoolWaterOpacityId)) poolWaterMaterial.SetFloat(PoolWaterOpacityId, poolWaterOpacity);
+        if (poolWaterMaterial.HasProperty(PoolWaterReflectionOpacityId)) poolWaterMaterial.SetFloat(PoolWaterReflectionOpacityId, poolWaterReflectionOpacity);
+        if (poolWaterMaterial.HasProperty(PoolWaterReflectionFadeDepthId)) poolWaterMaterial.SetFloat(PoolWaterReflectionFadeDepthId, poolWaterReflectionFadeDepth);
+        if (poolWaterMaterial.HasProperty(PoolWaterCausticsSizeId)) poolWaterMaterial.SetFloat(PoolWaterCausticsSizeId, poolWaterCausticsSize);
+        if (poolWaterMaterial.HasProperty(PoolWaterCausticsIntensityId)) poolWaterMaterial.SetFloat(PoolWaterCausticsIntensityId, poolWaterCausticsIntensity);
+        if (poolWaterMaterial.HasProperty(PoolWaterWavesSizeId)) poolWaterMaterial.SetFloat(PoolWaterWavesSizeId, poolWaterWavesSize);
+        if (poolWaterMaterial.HasProperty(PoolWaterWavesIntensityId)) poolWaterMaterial.SetFloat(PoolWaterWavesIntensityId, poolWaterWavesIntensity);
+        if (poolWaterMaterial.HasProperty(PoolWaterWavesMoveSpeedId)) poolWaterMaterial.SetFloat(PoolWaterWavesMoveSpeedId, poolWaterWavesMoveSpeed);
+        if (poolWaterMaterial.HasProperty(PoolWaterFoamIntensityId)) poolWaterMaterial.SetFloat(PoolWaterFoamIntensityId, poolWaterFoamIntensity);
+        if (poolWaterMaterial.HasProperty(PoolWaterFoamDistortionSpeedId)) poolWaterMaterial.SetFloat(PoolWaterFoamDistortionSpeedId, poolWaterFoamDistortionSpeed);
+        if (poolWaterMaterial.HasProperty(PoolWaterFoamDistortionSizeId)) poolWaterMaterial.SetFloat(PoolWaterFoamDistortionSizeId, poolWaterFoamDistortionSize);
+    }
+
     /// <summary>
-    /// Persists the current material state while previewing in the Unity Editor.
+    /// Persists every controller-managed material state while previewing in the Unity Editor.
     /// Runtime slider adjustments are otherwise discarded when Play mode ends.
     /// </summary>
-    public void SaveStatueGoldShineMaterial()
+    public void SaveControlledMaterialSettings()
     {
 #if UNITY_EDITOR
         if (!Application.isPlaying)
         {
-            Debug.LogWarning("The shine material can only be saved from Play mode.", this);
+            Debug.LogWarning("Controlled material settings can only be saved from Play mode.", this);
             return;
         }
 
-        if (statueGoldShineMaterial == null)
+        int materialCount = 0;
+        materialCount += MarkMaterialForSave(statueGoldShineMaterial) ? 1 : 0;
+        materialCount += MarkMaterialForSave(waterfallMaterial) ? 1 : 0;
+        materialCount += MarkMaterialForSave(swayingLeafMaterial) ? 1 : 0;
+        materialCount += MarkMaterialForSave(poolWaterMaterial) ? 1 : 0;
+
+        if (materialCount == 0)
         {
-            Debug.LogWarning("Cannot save the shine material because no material is assigned.", this);
+            Debug.LogWarning("Cannot save settings because no controller-managed materials are assigned.", this);
             return;
         }
 
-        EditorUtility.SetDirty(statueGoldShineMaterial);
         AssetDatabase.SaveAssets();
-        Debug.Log($"Saved shine settings to '{AssetDatabase.GetAssetPath(statueGoldShineMaterial)}'.", this);
+        Debug.Log($"Saved {materialCount} controller-managed material setting asset(s).", this);
 #else
         Debug.LogWarning("Saving authoring material settings is available only in the Unity Editor.", this);
 #endif
     }
+
+    /// <summary>Compatibility callback for an existing manually wired Save button event.</summary>
+    public void SaveStatueGoldShineMaterial()
+    {
+        SaveControlledMaterialSettings();
+    }
+
+#if UNITY_EDITOR
+    private static bool MarkMaterialForSave(Material material)
+    {
+        if (material == null)
+        {
+            return false;
+        }
+
+        EditorUtility.SetDirty(material);
+        return true;
+    }
+#endif
 }
