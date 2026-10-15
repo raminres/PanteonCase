@@ -18,9 +18,15 @@ public sealed class StylizedSceneController : MonoBehaviour
     private static readonly int ShineSpeedId = Shader.PropertyToID("_ShineSpeed");
     private static readonly int ShineWidthId = Shader.PropertyToID("_ShineWidth");
     private static readonly int ShineSoftnessId = Shader.PropertyToID("_ShineSoftness");
+    private static readonly int WaterfallWaveSpeedId = Shader.PropertyToID("_WaveSpeed");
+    private static readonly int WaterfallNoiseStrengthId = Shader.PropertyToID("_NoiseStrength");
+    private static readonly int WaterfallOpacityId = Shader.PropertyToID("_Opacity");
+    private static readonly int WaterfallFoamAmountId = Shader.PropertyToID("_FoamAmount");
     private static readonly int CloudSpeedId = Animator.StringToHash("Speed");
     private const float MaxRainEmissionRate = 30f;
     private const float RainCloudMinimumValue = 0.7f;
+    private const float MinWaterfallImageWidth = 64f;
+    private const float MaxWaterfallImageWidth = 1024f;
 
     [Header("Statue Gold Shine")]
     [Tooltip("Shared material used by the CatStatueShine UI Image. The controller updates this existing material and never creates runtime material instances.")]
@@ -59,6 +65,28 @@ public sealed class StylizedSceneController : MonoBehaviour
     [Tooltip("The single cloud layer darkened as rainfall increases. Its hue, saturation, and alpha are preserved.")]
     [SerializeField] private Image rainCloudImage;
 
+    [Header("Waterfall UI Bindings")]
+    [Tooltip("RectTransform of the Waterfall UI Image. Only its width is changed by the associated slider.")]
+    [SerializeField] private RectTransform waterfallImageRectTransform;
+
+    [Tooltip("Shared material using Panteon/UI/Stylized Waterfall. The controller updates this material directly and never creates runtime instances.")]
+    [SerializeField] private Material waterfallMaterial;
+
+    [Tooltip("Optional slider with a recommended range of 64 to 1024 pixels.")]
+    [SerializeField] private Slider waterfallImageWidthSlider;
+
+    [Tooltip("Optional slider with a range of -2 to 2, matching the waterfall shader's Wave Speed property.")]
+    [SerializeField] private Slider waterfallWaveSpeedSlider;
+
+    [Tooltip("Optional slider with a range of 0 to 1, matching the waterfall shader's Pulse Noise Strength property.")]
+    [SerializeField] private Slider waterfallPulseNoiseStrengthSlider;
+
+    [Tooltip("Optional slider with a range of 0 to 1, matching the waterfall shader's Opacity property.")]
+    [SerializeField] private Slider waterfallOpacitySlider;
+
+    [Tooltip("Optional slider with a range of 0 to 1, matching the waterfall shader's Foam Amount property.")]
+    [SerializeField] private Slider waterfallFoamAmountSlider;
+
     [Header("Authoring Save")]
     [Tooltip("Saves the current shine-material values to disk when clicked in Play mode. This action is editor-only and is omitted from player builds.")]
     [SerializeField] private Button saveSettingsButton;
@@ -73,6 +101,11 @@ public sealed class StylizedSceneController : MonoBehaviour
     private float cloudAnimationSpeed;
     private Color rainCloudBaseColor;
     private bool rainCloudBaseColorCaptured;
+    private float waterfallImageWidth;
+    private float waterfallWaveSpeed;
+    private float waterfallPulseNoiseStrength;
+    private float waterfallOpacity;
+    private float waterfallFoamAmount;
 
     private void OnEnable()
     {
@@ -84,6 +117,8 @@ public sealed class StylizedSceneController : MonoBehaviour
         BindCloudMovementControls();
         InitializeRain();
         BindRainControls();
+        InitializeWaterfall();
+        BindWaterfallControls();
     }
 
     private void OnDisable()
@@ -91,6 +126,7 @@ public sealed class StylizedSceneController : MonoBehaviour
         UnbindStatueGoldShineControls();
         UnbindCloudMovementControls();
         UnbindRainControls();
+        UnbindWaterfallControls();
     }
 
     private void OnValidate()
@@ -180,6 +216,45 @@ public sealed class StylizedSceneController : MonoBehaviour
         Color rainTint = Color.HSVToRGB(hue, saturation, value);
         rainTint.a = rainCloudBaseColor.a;
         rainCloudImage.color = rainTint;
+    }
+
+    /// <summary>Sets the Waterfall Image width without changing its height or anchors.</summary>
+    public void SetWaterfallImageWidth(float width)
+    {
+        waterfallImageWidth = Mathf.Clamp(width, MinWaterfallImageWidth, MaxWaterfallImageWidth);
+
+        if (waterfallImageRectTransform != null)
+        {
+            waterfallImageRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, waterfallImageWidth);
+        }
+    }
+
+    /// <summary>Sets the signed flow speed for the waterfall mask's red wave channel.</summary>
+    public void SetWaterfallWaveSpeed(float speed)
+    {
+        waterfallWaveSpeed = Mathf.Clamp(speed, -2f, 2f);
+        ApplyWaterfallMaterialProperties();
+    }
+
+    /// <summary>Controls how strongly the blue mask channel pulses the wave and foam layers.</summary>
+    public void SetWaterfallPulseNoiseStrength(float strength)
+    {
+        waterfallPulseNoiseStrength = Mathf.Clamp01(strength);
+        ApplyWaterfallMaterialProperties();
+    }
+
+    /// <summary>Sets the shared alpha multiplier of the waterfall shader.</summary>
+    public void SetWaterfallOpacity(float opacity)
+    {
+        waterfallOpacity = Mathf.Clamp01(opacity);
+        ApplyWaterfallMaterialProperties();
+    }
+
+    /// <summary>Controls the green mask channel's visible foam contribution.</summary>
+    public void SetWaterfallFoamAmount(float amount)
+    {
+        waterfallFoamAmount = Mathf.Clamp01(amount);
+        ApplyWaterfallMaterialProperties();
     }
 
     /// <summary>Sets the highlight intensity without changing its RGB tint.</summary>
@@ -338,6 +413,79 @@ public sealed class StylizedSceneController : MonoBehaviour
         }
     }
 
+    private void InitializeWaterfall()
+    {
+        if (waterfallImageRectTransform != null)
+        {
+            waterfallImageWidth = Mathf.Clamp(waterfallImageRectTransform.rect.width,
+                                              MinWaterfallImageWidth,
+                                              MaxWaterfallImageWidth);
+        }
+
+        ReadWaterfallValuesFromMaterial();
+        SetWaterfallImageWidth(waterfallImageWidth);
+        ApplyWaterfallMaterialProperties();
+        SynchronizeWaterfallControls();
+    }
+
+    private void BindWaterfallControls()
+    {
+        UnbindWaterfallControls();
+
+        if (waterfallImageWidthSlider != null)
+        {
+            waterfallImageWidthSlider.onValueChanged.AddListener(SetWaterfallImageWidth);
+        }
+
+        if (waterfallWaveSpeedSlider != null)
+        {
+            waterfallWaveSpeedSlider.onValueChanged.AddListener(SetWaterfallWaveSpeed);
+        }
+
+        if (waterfallPulseNoiseStrengthSlider != null)
+        {
+            waterfallPulseNoiseStrengthSlider.onValueChanged.AddListener(SetWaterfallPulseNoiseStrength);
+        }
+
+        if (waterfallOpacitySlider != null)
+        {
+            waterfallOpacitySlider.onValueChanged.AddListener(SetWaterfallOpacity);
+        }
+
+        if (waterfallFoamAmountSlider != null)
+        {
+            waterfallFoamAmountSlider.onValueChanged.AddListener(SetWaterfallFoamAmount);
+        }
+    }
+
+    private void UnbindWaterfallControls()
+    {
+        if (waterfallImageWidthSlider != null)
+        {
+            waterfallImageWidthSlider.onValueChanged.RemoveListener(SetWaterfallImageWidth);
+        }
+
+        if (waterfallWaveSpeedSlider != null)
+        {
+            waterfallWaveSpeedSlider.onValueChanged.RemoveListener(SetWaterfallWaveSpeed);
+        }
+
+        if (waterfallPulseNoiseStrengthSlider != null)
+        {
+            waterfallPulseNoiseStrengthSlider.onValueChanged.RemoveListener(SetWaterfallPulseNoiseStrength);
+        }
+
+        if (waterfallOpacitySlider != null)
+        {
+            waterfallOpacitySlider.onValueChanged.RemoveListener(SetWaterfallOpacity);
+        }
+
+        if (waterfallFoamAmountSlider != null)
+        {
+            waterfallFoamAmountSlider.onValueChanged.RemoveListener(SetWaterfallFoamAmount);
+        }
+    }
+
     private void SynchronizeStatueGoldShineControls()
     {
         // This keeps the UI in sync without invoking callbacks during setup.
@@ -359,6 +507,34 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (statueGoldShineSoftnessSlider != null)
         {
             statueGoldShineSoftnessSlider.SetValueWithoutNotify(statueGoldShineSoftness);
+        }
+    }
+
+    private void SynchronizeWaterfallControls()
+    {
+        if (waterfallImageWidthSlider != null)
+        {
+            waterfallImageWidthSlider.SetValueWithoutNotify(waterfallImageWidth);
+        }
+
+        if (waterfallWaveSpeedSlider != null)
+        {
+            waterfallWaveSpeedSlider.SetValueWithoutNotify(waterfallWaveSpeed);
+        }
+
+        if (waterfallPulseNoiseStrengthSlider != null)
+        {
+            waterfallPulseNoiseStrengthSlider.SetValueWithoutNotify(waterfallPulseNoiseStrength);
+        }
+
+        if (waterfallOpacitySlider != null)
+        {
+            waterfallOpacitySlider.SetValueWithoutNotify(waterfallOpacity);
+        }
+
+        if (waterfallFoamAmountSlider != null)
+        {
+            waterfallFoamAmountSlider.SetValueWithoutNotify(waterfallFoamAmount);
         }
     }
 
@@ -387,6 +563,63 @@ public sealed class StylizedSceneController : MonoBehaviour
         Color appliedColor = statueGoldShineColor;
         appliedColor.a = statueGoldShineEnabled ? appliedColor.a : 0f;
         statueGoldShineMaterial.SetColor(ShineColorId, appliedColor);
+    }
+
+    private void ReadWaterfallValuesFromMaterial()
+    {
+        if (waterfallMaterial == null)
+        {
+            return;
+        }
+
+        if (waterfallMaterial.HasProperty(WaterfallWaveSpeedId))
+        {
+            waterfallWaveSpeed = Mathf.Clamp(waterfallMaterial.GetFloat(WaterfallWaveSpeedId), -2f, 2f);
+        }
+
+        if (waterfallMaterial.HasProperty(WaterfallNoiseStrengthId))
+        {
+            waterfallPulseNoiseStrength = Mathf.Clamp01(waterfallMaterial.GetFloat(WaterfallNoiseStrengthId));
+        }
+
+        if (waterfallMaterial.HasProperty(WaterfallOpacityId))
+        {
+            waterfallOpacity = Mathf.Clamp01(waterfallMaterial.GetFloat(WaterfallOpacityId));
+        }
+
+        if (waterfallMaterial.HasProperty(WaterfallFoamAmountId))
+        {
+            waterfallFoamAmount = Mathf.Clamp01(waterfallMaterial.GetFloat(WaterfallFoamAmountId));
+        }
+    }
+
+    private void ApplyWaterfallMaterialProperties()
+    {
+        if (waterfallMaterial == null)
+        {
+            return;
+        }
+
+        // HasProperty guards keep the controller safe while a material is being authored or replaced.
+        if (waterfallMaterial.HasProperty(WaterfallWaveSpeedId))
+        {
+            waterfallMaterial.SetFloat(WaterfallWaveSpeedId, waterfallWaveSpeed);
+        }
+
+        if (waterfallMaterial.HasProperty(WaterfallNoiseStrengthId))
+        {
+            waterfallMaterial.SetFloat(WaterfallNoiseStrengthId, waterfallPulseNoiseStrength);
+        }
+
+        if (waterfallMaterial.HasProperty(WaterfallOpacityId))
+        {
+            waterfallMaterial.SetFloat(WaterfallOpacityId, waterfallOpacity);
+        }
+
+        if (waterfallMaterial.HasProperty(WaterfallFoamAmountId))
+        {
+            waterfallMaterial.SetFloat(WaterfallFoamAmountId, waterfallFoamAmount);
+        }
     }
 
     /// <summary>

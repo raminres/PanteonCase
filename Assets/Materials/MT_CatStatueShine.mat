@@ -108,7 +108,7 @@ Material:
     - _ReceiveShadows: 1
     - _ShineAngle: 27.838379
     - _ShineSoftness: 0.001
-    - _ShineSpeed: -0.26298654
+    - _ShineSpeed: 0.13498902
     - _ShineWidth: 0.01
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
