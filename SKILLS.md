@@ -16,23 +16,20 @@ This is a project workflow reference, not a list of installed tools. Use it with
 - Count texture samples and transparent area before calling an effect mobile-friendly. No device profiling claim without evidence.
 - Keep a static visual fallback and an effect enable path for each completed effect.
 
-## Current packed water-mask convention
+## Current water-mask convention
 
-`Assets/Textures/TX_CausticsWavesWaterFoam_Mask.png` uses:
+- `TX_CausticsAndWaves_Mask`: `R/G` are interpolated caustic states; `B/A` are interpolated wave states.
+- `TX_WaterBorderAndNoises_Mask`: `R` is water perimeter, `G` is edge-foam placement, `B/A` are foam-distortion noise.
+- `TX_Scene_Reflection`: deliberate UV-aligned reflection artwork. The shader flips it vertically and fades it with depth; do not replace it with a camera grab.
 
-- R — caustic pattern;
-- G — low-frequency wave/height noise;
-- B — final pool coverage;
-- A — foam placement.
-
-The current water shader is exploratory. It self-distorts the Water Image, so it cannot show believable reflected/refracted neighbouring art. For that effect, provide a deliberate source layer/texture behind the water rather than adding a camera grab.
+The current water shader is a large transparent, multi-sample UI pass. Profile it before making it more complex, and provide a static/low-cost fallback before final delivery.
 
 ## Controller and UI practices
 
 - Keep `StylizedSceneController` as the one root configuration point.
 - Bind UI controls in `OnEnable` and unbind in `OnDisable`; avoid duplicated listeners.
 - Cache shader property IDs and animator hashes. Do not allocate or look up components every frame.
-- The Save button currently persists only the statue-shine material, in Editor Play Mode. It must not be represented as a general runtime save system.
+- The Save button persists the statue, waterfall, leaf, and pool-water managed materials in Editor Play Mode. It must not be represented as a general runtime save system.
 
 ## Validation order
 

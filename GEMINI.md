@@ -8,7 +8,7 @@ Act as a technical-art collaborator for a Unity 6.3.23f1 URP project. The user p
 
 ## Current milestone
 
-The current focus is the pool-water effect. A first packed-mask UI HLSL pass is present, but the user has explicitly rejected its current visual quality. Treat the next water action as a visual redesign/diagnosis, not an incremental parameter tweak. See `PROJECT_HANDOFF.md` for precise asset paths and limitations.
+Core effects and their controls are implemented: statue shine, clouds/rain, waterfall, leaf sway, and pool water. The next focus is artistic review plus actual-device performance validation—not automatic feature expansion. See `PROJECT_HANDOFF.md` for precise active bindings, performance candidates, and safe next tests.
 
 ## Non-negotiables
 
@@ -31,6 +31,7 @@ The current focus is the pool-water effect. A first packed-mask UI HLSL pass is 
 
 - Statue gold shine: implemented with Canvas controls and editor-only material saving.
 - Clouds: Animator `Speed` parameter is driven by UI.
-- Rain: UI controls particle emission and Cloud1 darkening; RenderTexture output still needs iOS verification.
-- Pool water: early UI HLSL pass using the RGBA packed mask; not artistically accepted.
-- Waterfall and foliage: not implemented.
+- Rain: UI controls particle emission and Cloud1 darkening; dedicated RenderTexture output needs iOS verification.
+- Waterfall: independent masked flow/foam shader with linked waterfall/CatStatue/foam width control.
+- Foliage: selected leaves use anchored vertex sway with shared material controls.
+- Pool water: two-mask pass with supplied reflection, caustics, waves, edge foam, and animated foam distortion; requires visual/device review.

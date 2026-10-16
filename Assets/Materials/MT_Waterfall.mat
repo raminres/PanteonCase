@@ -109,7 +109,7 @@ Material:
     - _FoamFromTop: 1
     - _FoamHeight: 0.02
     - _FoamOpacityVariation: 0.473
-    - _FoamPosition: 0.32
+    - _FoamPosition: 0.286
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
@@ -145,7 +145,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BottomColor: {r: 0, g: 0, b: 0, a: 1}
+    - _BottomColor: {r: 0.18217221, g: 0.77620643, b: 0.9496855, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EffectTiling: {r: 2, g: 1.05, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
@@ -158,7 +158,7 @@ Material:
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _StreakSpeed: {r: 0, g: 0.1, b: 0, a: 0}
     - _StreakTiling: {r: 1, g: 1, b: 0, a: 0}
-    - _TopColor: {r: 0.028301716, g: 0.73616135, b: 1, a: 1}
+    - _TopColor: {r: 0.121568635, g: 0.6117647, b: 0.6509804, a: 1}
     - _WaterColor: {r: 0.14117648, g: 0.69803923, b: 0.7490196, a: 1}
     - _WaveDirection: {r: 0, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []

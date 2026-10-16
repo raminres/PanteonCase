@@ -1,97 +1,74 @@
-# Project Handoff — 2026-10-14
+# Project Handoff — 2026-10-15
 
 ## Purpose
 
-This is the continuation note for the next working session. It records actual implemented state, current limitations, and safe next actions. It is a working document, not final delivery documentation.
+This is the working continuation note for the next session. It records the implemented state observed in the project, the latest performance review, and the safe next actions. It is not final delivery documentation.
 
-## Environment and scene
+## Environment and safety
 
-- Unity `6000.3.23f1`, URP `17.3.0`.
-- The current authored scene is `Assets/Scenes/PanteonCaseScene.unity`.
-- The Canvas is Screen Space Overlay. A camera cannot hide or render its Overlay UI; use this when diagnosing camera/RenderTexture issues.
-- The project is intentionally dirty. Preserve all pre-existing user changes, especially the PSD edits and the deletion of `SampleScene` / its meta file. Do not restore or save them automatically.
+- Unity `6000.3.23f1`, URP `17.3.0`; authored scene: `Assets/Scenes/PanteonCaseScene.unity`.
+- The scene uses a Screen Space Overlay uGUI Canvas. Its art is not rendered by the scene cameras.
+- The project is intentionally dirty. Preserve the user's PSD, scene, material, and unsaved Editor work. Do not restore the deleted `SampleScene` or save/edit scene or prefab YAML outside Unity.
+- `Assets/Sprites/TechnicalArtStageAsset.png` remains immutable source art. The layered PSD is the editable source for the sprite layers used by the composition.
 
-## Implemented scene controls
+## Implemented effects and controls
 
-`Assets/Scripts/StylizedSceneController.cs` is attached to the scene root and currently owns:
+`Assets/Scripts/StylizedSceneController.cs` is the one root-level controller. It binds controls in `OnEnable`, unbinds in `OnDisable`, caches shader IDs, and does not create runtime material instances or use per-frame callbacks.
 
-| Feature | Current binding / behaviour |
+| Effect | Current implementation / managed material |
 | --- | --- |
-| Statue shine | Uses `MT_CatStatueShine.mat`; UI sliders control angle (0–360), speed (-2–2), width (0.01–0.5), and softness (0.001–0.25). Colour stays serialized on the controller. |
-| Save button | In Unity Editor Play Mode only, writes the current statue-shine material values to disk. It does not save general scene/UI/water state. |
-| Clouds | `Clouds` Animator Float parameter `Speed` is driven by the Cloud Speed UI slider (-1–1). Negative values reverse motion. |
-| Rain | Rain Amount slider (0–30) writes `RainParticle` rate-over-time. The same normalized amount darkens `Cloud1` HSV value from 100% to 70%, preserving hue/saturation/alpha. |
+| Statue gold | `StatueGoldShine.shader` / `MT_CatStatueShine.mat`. Controls: angle, speed, width, softness, colour/intensity, and additive-shine enable. |
+| Clouds and rain | Cloud Animator `Speed` is controlled by the UI. Rain Amount maps to `RainParticle` emission (`0–30`) and darkens `Cloud1` value to 70% at maximum rain. |
+| Waterfall | `StylizedWaterfall.shader` / `MT_Waterfall.mat`, using `TX_StylizedStreaks_Mask` (`R` waves, `G` foam, `B` pulse, `A` silhouette). Controls include width, wave speed, pulse strength, opacity, and foam amount. The linked normalized width also changes CatStatue width (333 px at 1) and the foam particle box width (8 at 1); waterfall maximum width is 512 px. |
+| Leaf wind | `StylizedLeafWind.shader` / `MT_SwayingLeaf.mat`. Vertex-based anchored sway uses a broad wave, avoiding visibly travelling small noise. Controls: body bend strength, wind speed, and base-anchor falloff. The Canvas must retain `TexCoord1` for this shader. |
+| Pool water | `StylizedPoolWater.shader` / `MT_Water.mat`. It provides vertical two-colour grading, caustics, waves, edge foam, animated foam distortion, and a vertically flipped supplied reflection texture. |
 
-No water controls are wired into this controller yet; do not add them until the desired water look is agreed.
+The Save button calls `SaveControlledMaterialSettings()` in Editor Play Mode. It now persists all four controller-managed materials: statue, waterfall, leaf wind, and pool water. It is not a player save system.
 
-## Rain / iOS note
+## Active pool-water assets and mask convention
 
-- `RainFall` RawImage should reference `Assets/Textures/RTX_RainCamera.renderTexture`.
-- Its colour format `R8G8B8A8_UNORM` is compatible with iOS. A previous inspection found the `RainCamera` target texture unset even though the RawImage pointed to the render texture; verify this in the Inspector before the next device build.
-- A depth/stencil buffer is not required for simple rain particles and can be removed later if device tests warrant it.
+- `Assets/Textures/TX_CausticsAndWaves_Mask.png`: `R/G` are two caustic states that blend in time; `B/A` are two wave states that blend in time.
+- `Assets/Textures/TX_WaterBorderAndNoises_Mask.png`: `R` water perimeter, `G` edge foam, `B/A` distortion-noise field.
+- `Assets/Textures/TX_Scene_Reflection.png`: UV-aligned reflection art, flipped vertically in the shader and faded deeper into the water.
+- Legacy `TX_CausticsWavesWaterFoam_Mask.png` remains referenced in serialized material data but is not used by the current shader. Do not remove it until the user verifies the current material and build dependencies.
 
-## Water: exact current state
+Pool-water controls currently exposed on the controller/UI: opacity, reflection opacity, reflection fade depth, caustics size/intensity, waves size/intensity/move speed, foam intensity, and foam distortion speed/size.
 
-### Assets
+## Latest static performance audit
 
-- Shader: `Assets/Shaders/UI/StylizedPoolWater.shader`
-- Active material: `Assets/Materials/MT_Water.mat`
-- Intended target: `PF_PanteonCase/Water` Image
-- Packed mask: `Assets/Textures/TX_CausticsWavesWaterFoam_Mask.png`
+The user saw roughly `14–15` in the Frame Debugger. That is a good low draw/batch indication, but it does not identify fill-rate, texture-bandwidth, CPU, or RAM limits. No actual-device performance claim has been made.
 
-The active material references the packed mask. Its user-authored material values should be preserved. The Water Image uses the PSD Water sprite and the material above.
+### Highest-priority checks
 
-### Packed texture channels
+1. The pool-water Image covers a large transparent area and its shader currently performs about nine texture samples per shaded pixel. Profile it first; reducing an intensity to zero does not remove its texture sampling. A dedicated lite water shader/material is the right fallback if it proves GPU-bound.
+2. The active composition uses 14 sprites from `TechnicalArtStageAsset.psd`, imported up to 2048 on iOS with mipmaps. PSD is not a runtime-format penalty: Unity runs the imported texture/sprite data. The risks are its final texture-page count, resolution, compression, and mip allocation. Test no mipmaps and a 1024 iOS override only after visual QA at both target aspect ratios.
+3. 160 `Graphic` components currently have Raycast Target enabled. Turn it off on all decorative Images, RawImages, TMP labels, and leaves; retain it only on interactive controls.
+4. The Canvas is configured to send all additional vertex streams. The leaf shader only needs `TexCoord1`; after checking other custom shaders, reduce Canvas Additional Shader Channels to `TexCoord1` only.
 
-| Channel | Intended use in current shader |
-| --- | --- |
-| R | Panned/scaled caustics pattern |
-| G | Panned wave-height/noise field, reconstructed as a pseudo normal |
-| B | Static water coverage / final alpha boundary |
-| A | Hand-authored foam placement |
+### Camera, RenderTexture, and URP findings
 
-### What the current shader does
+- Main Camera currently culls every layer even though the Canvas is Overlay. Foam (layer 30) and Rain (layer 31) have dedicated capture cameras. Exclude those two layers from the Main Camera, and test disabling the Main Camera if it draws no required background.
+- `FoamCamera` and `RainCamera` correctly target `RTX_FoamCamera` (256×128) and `RTX_RainCamera` (128×128). Their texture-memory cost is small, but their extra rendering passes matter. For these unlit captures, test HDR, MSAA, shadows, and occlusion culling off; use no depth/stencil format if depth is unnecessary. Tag both auxiliary cameras `Untagged` so only the actual game camera is `MainCamera`.
+- The Mobile URP asset already has render scale `0.8`, depth texture off, opaque texture off, SRP Batcher on, and native render pass on. HDR and unused lighting/shadow features remain enabled; if no lit 3D is planned, test disabling them. Post-processing is off on all cameras, so the Bloom/Vignette profile is not currently a runtime cost.
+- Data masks correctly use sRGB off. Add explicit iOS ASTC import overrides after visual QA; start with ASTC 6×6 for masks/reflection. Disable mips for fixed-scale Canvas textures where quality permits.
 
-- Keeps the B coverage boundary static.
-- Samples the G channel three times to reconstruct a local pseudo normal.
-- Uses that normal to shift the Water Image’s own UVs (local/self refraction) and produce directional surface light.
-- Applies a two-colour vertical grade while retaining the sprite detail.
-- Pans R caustics independently.
-- Offsets the A foam lookup with the same G noise instead of using a sine pulse.
-- Supports standard uGUI stencil, RectMask2D clipping, and alpha clipping.
+### Known good baseline
 
-### Why it is not yet accepted
+- Particle systems are capped modestly and have no collision, trails, noise, or lights.
+- There are no custom `Update`, `LateUpdate`, or `FixedUpdate` methods in `Assets/Scripts`.
+- The canvas uses `m_CullTransparentMesh`, and the custom effects remain unlit UI shaders.
 
-The user reviewed this version and said it remains visually unsatisfactory. The shader can only distort and light the Water Image itself; it cannot actually reflect/refract nearby scene art because it has no source texture for that art. Adding more controls alone is unlikely to solve the artistic issue.
+## Next-session validation order
 
-The next session should begin with a Play Mode visual review and answer one question: **what should the water primarily communicate—painted ripples, a reflected jungle/sky layer, or transparent pool water with the art below visibly refracted?**
+1. Make an iOS Development Build with the Profiler attached.
+2. Record four short captures: baseline; pool-water Image disabled; foam/rain capture cameras disabled; control panel hidden with decorative raycasts disabled.
+3. Compare GPU ms, Main Thread, Render Thread, Texture Memory, and RenderTexture Memory. In Frame Debugger, verify that Main Camera does not also render Foam/Rain.
+4. Only then decide whether the first cleanup is a lite water shader, texture import reduction, or UI raycast/auxiliary-camera cleanup.
+5. Validate visuals at 1080×1920 and 1536×2048 after every accepted import or Canvas-channel change.
 
-Recommended next action after that choice:
+## Remaining delivery work
 
-1. Inspect the mask channels at full resolution. The G channel must be a smooth, low-frequency height field; A must only contain foam edges.
-2. If actual reflection/refraction is desired, ask the artist for a separate, UV-aligned source layer (for example, a muted reflected sky/foliage image or background-under-water image). Sample that in a second pass/material instead of adding a camera grab.
-3. Keep pool water and waterfall as separate materials/effects.
-4. Once the visual direction works, expose only the chosen 3–5 water parameters on `StylizedSceneController` / the Canvas panel.
-5. Then profile: the current exploratory pass has one Water-sprite sample and six packed-mask samples per shaded pixel, so it must be reviewed with overdraw and device evidence before final approval.
-
-## Build history and packages
-
-- Visual Scripting, Timeline, and Multiplayer Center packages were removed to reduce unused project content. No asset/code usage was found.
-- A previous missing-control-panel build was diagnosed as a build-scene problem: iOS build settings then included `SampleScene` instead of `PanteonCaseScene`. Because `SampleScene` is now a user worktree deletion, re-check the build scene list manually before the next iOS build. Do not assume it is fixed.
-
-## Unfinished delivery work
-
-- Final prefab at `Assets/Prefabs/StylizedJungleScene.prefab`.
-- Waterfall flow and foam treatment.
-- Selected leaf/vine wind with anchored pivots.
-- Water acceptance, static fallback, and enable switch.
-- 9:16 / 3:4 validation.
-- Frame Debugger, Stats, iOS device profiling, and RenderTexture validation.
-- Final README performance notes, video, clean-project import, and `.unitypackage` smoke test.
-
-## Safe continuation rules
-
-- Do not edit `.unity` or `.prefab` YAML while the Editor is open; use the live Editor/CLI.
-- Do not save the active scene or apply prefab overrides unless the user explicitly asks.
-- Do not delete/restore current untracked/modified art, scenes, or material assets.
-- Do not claim the project is optimized for mobile without recorded profiling evidence.
+- Artist review and final acceptance/static fallback/enable switches for the effects.
+- Create `Assets/Prefabs/StylizedJungleScene.prefab` when the scene is stable.
+- Device profiling and Frame Debugger/Stats records.
+- Aspect-ratio validation, a short technical README/performance record, clean-project import, and package smoke test.
