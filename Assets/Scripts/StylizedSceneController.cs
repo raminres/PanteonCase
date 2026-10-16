@@ -36,6 +36,14 @@ public sealed class StylizedSceneController : MonoBehaviour
     private static readonly int PoolWaterFoamIntensityId = Shader.PropertyToID("_FoamIntensity");
     private static readonly int PoolWaterFoamDistortionSpeedId = Shader.PropertyToID("_FoamDistortionSpeed");
     private static readonly int PoolWaterFoamDistortionSizeId = Shader.PropertyToID("_FoamDistortionSize");
+    private static readonly int WaterfallRippleSpeedId = Shader.PropertyToID("_RippleSpeed");
+    private static readonly int PoolRippleRingSpawnScaleId = Shader.PropertyToID("_RippleRingSpawnScale");
+    private static readonly int PoolRippleRingEndScaleId = Shader.PropertyToID("_RippleRingEndScale");
+    private static readonly int PoolRippleRingSpacingId = Shader.PropertyToID("_RippleRingSpacing");
+    private static readonly int PoolRippleSpawnFadeDurationId = Shader.PropertyToID("_RippleSpawnFadeDuration");
+    private static readonly int PoolRippleRingEndFadeStartId = Shader.PropertyToID("_RippleRingEndFadeStart");
+    private static readonly int PoolRippleHeightStrengthId = Shader.PropertyToID("_RippleHeightStrength");
+    private static readonly int PoolRippleFoamIntensityId = Shader.PropertyToID("_RippleFoamIntensity");
     private static readonly int CloudSpeedId = Animator.StringToHash("Speed");
     private const float MaxRainEmissionRate = 30f;
     private const float RainCloudMinimumValue = 0.7f;
@@ -166,6 +174,16 @@ public sealed class StylizedSceneController : MonoBehaviour
     [Tooltip("Slider controlling foam-distortion pattern size. Its configured UI range is respected.")]
     [SerializeField] private Slider poolWaterFoamDistortionSizeSlider;
 
+    [Header("Waterfall Ripple UI Bindings")]
+    [Tooltip("Optional slider controlling the point in a ring lifetime where its outer-edge fade begins. Use a range of 0.4 to 0.95.")]
+    [SerializeField] private Slider waterfallRippleRingFadeSlider;
+
+    [Tooltip("Optional slider controlling the R-channel foam detail layered on the ripple rings. Use a range of 0 to 3.")]
+    [SerializeField] private Slider waterfallRippleFoamIntensitySlider;
+
+    [Tooltip("Optional slider controlling the ripple height effect for the water's visible relief and refraction. Use a range of 0 to 4.")]
+    [SerializeField] private Slider waterfallRippleHeightEffectSlider;
+
     [Header("Authoring Save")]
     [Tooltip("Saves all controller-managed material values to disk when clicked in Play mode. This action is editor-only and is omitted from player builds.")]
     [SerializeField] private Button saveSettingsButton;
@@ -200,6 +218,14 @@ public sealed class StylizedSceneController : MonoBehaviour
     private float poolWaterFoamIntensity;
     private float poolWaterFoamDistortionSpeed;
     private float poolWaterFoamDistortionSize;
+    private float waterfallRippleSpeed;
+    private float waterfallRippleRingSpawnScale;
+    private float waterfallRippleRingEndScale;
+    private float waterfallRippleRingSpacing;
+    private float waterfallRippleSpawnFadeDuration;
+    private float waterfallRippleRingEndFadeStart;
+    private float waterfallRippleFoamIntensity;
+    private float waterfallRippleHeightEffect;
 
     private void OnEnable()
     {
@@ -217,6 +243,8 @@ public sealed class StylizedSceneController : MonoBehaviour
         BindLeafWindControls();
         InitializePoolWater();
         BindPoolWaterControls();
+        InitializeWaterfallRipples();
+        BindWaterfallRippleControls();
     }
 
     private void OnDisable()
@@ -227,6 +255,7 @@ public sealed class StylizedSceneController : MonoBehaviour
         UnbindWaterfallControls();
         UnbindLeafWindControls();
         UnbindPoolWaterControls();
+        UnbindWaterfallRippleControls();
     }
 
     private void OnValidate()
@@ -473,6 +502,27 @@ public sealed class StylizedSceneController : MonoBehaviour
     {
         poolWaterFoamDistortionSize = size;
         ApplyPoolWaterMaterialProperties();
+    }
+
+    /// <summary>Sets when each continuous ripple ring begins to fade at the outer edge.</summary>
+    public void SetWaterfallRippleRingFade(float fadeStart)
+    {
+        waterfallRippleRingEndFadeStart = Mathf.Clamp(fadeStart, 0.4f, 0.95f);
+        ApplyWaterfallRippleMaterialProperties();
+    }
+
+    /// <summary>Sets the visible R-channel foam detail without changing the ring height field.</summary>
+    public void SetWaterfallRippleFoamIntensity(float intensity)
+    {
+        waterfallRippleFoamIntensity = Mathf.Clamp(intensity, 0f, 3f);
+        ApplyWaterfallRippleMaterialProperties();
+    }
+
+    /// <summary>Sets the shared height multiplier used by the overlay relief and pool refraction.</summary>
+    public void SetWaterfallRippleHeightEffect(float strength)
+    {
+        waterfallRippleHeightEffect = Mathf.Clamp(strength, 0f, 4f);
+        ApplyWaterfallRippleMaterialProperties();
     }
 
     /// <summary>Sets the highlight intensity without changing its RGB tint.</summary>
@@ -880,6 +930,51 @@ public sealed class StylizedSceneController : MonoBehaviour
         }
     }
 
+    private void InitializeWaterfallRipples()
+    {
+        ReadWaterfallRippleValuesFromMaterial();
+        ApplyWaterfallRippleMaterialProperties();
+        SynchronizeWaterfallRippleControls();
+    }
+
+    private void BindWaterfallRippleControls()
+    {
+        UnbindWaterfallRippleControls();
+
+        if (waterfallRippleRingFadeSlider != null)
+        {
+            waterfallRippleRingFadeSlider.onValueChanged.AddListener(SetWaterfallRippleRingFade);
+        }
+
+        if (waterfallRippleFoamIntensitySlider != null)
+        {
+            waterfallRippleFoamIntensitySlider.onValueChanged.AddListener(SetWaterfallRippleFoamIntensity);
+        }
+
+        if (waterfallRippleHeightEffectSlider != null)
+        {
+            waterfallRippleHeightEffectSlider.onValueChanged.AddListener(SetWaterfallRippleHeightEffect);
+        }
+    }
+
+    private void UnbindWaterfallRippleControls()
+    {
+        if (waterfallRippleRingFadeSlider != null)
+        {
+            waterfallRippleRingFadeSlider.onValueChanged.RemoveListener(SetWaterfallRippleRingFade);
+        }
+
+        if (waterfallRippleFoamIntensitySlider != null)
+        {
+            waterfallRippleFoamIntensitySlider.onValueChanged.RemoveListener(SetWaterfallRippleFoamIntensity);
+        }
+
+        if (waterfallRippleHeightEffectSlider != null)
+        {
+            waterfallRippleHeightEffectSlider.onValueChanged.RemoveListener(SetWaterfallRippleHeightEffect);
+        }
+    }
+
     private void SynchronizeStatueGoldShineControls()
     {
         // This keeps the UI in sync without invoking callbacks during setup.
@@ -1008,6 +1103,24 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (poolWaterFoamDistortionSizeSlider != null)
         {
             poolWaterFoamDistortionSizeSlider.SetValueWithoutNotify(poolWaterFoamDistortionSize);
+        }
+    }
+
+    private void SynchronizeWaterfallRippleControls()
+    {
+        if (waterfallRippleRingFadeSlider != null)
+        {
+            waterfallRippleRingFadeSlider.SetValueWithoutNotify(waterfallRippleRingEndFadeStart);
+        }
+
+        if (waterfallRippleFoamIntensitySlider != null)
+        {
+            waterfallRippleFoamIntensitySlider.SetValueWithoutNotify(waterfallRippleFoamIntensity);
+        }
+
+        if (waterfallRippleHeightEffectSlider != null)
+        {
+            waterfallRippleHeightEffectSlider.SetValueWithoutNotify(waterfallRippleHeightEffect);
         }
     }
 
@@ -1180,6 +1293,43 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (poolWaterMaterial.HasProperty(PoolWaterFoamIntensityId)) poolWaterMaterial.SetFloat(PoolWaterFoamIntensityId, poolWaterFoamIntensity);
         if (poolWaterMaterial.HasProperty(PoolWaterFoamDistortionSpeedId)) poolWaterMaterial.SetFloat(PoolWaterFoamDistortionSpeedId, poolWaterFoamDistortionSpeed);
         if (poolWaterMaterial.HasProperty(PoolWaterFoamDistortionSizeId)) poolWaterMaterial.SetFloat(PoolWaterFoamDistortionSizeId, poolWaterFoamDistortionSize);
+    }
+
+    private void ReadWaterfallRippleValuesFromMaterial()
+    {
+        if (poolWaterMaterial == null)
+        {
+            return;
+        }
+
+        // The pool material is now the single source of truth for both the visible impact and
+        // its local refraction. Keeping this state in one material removes timeline drift.
+        if (poolWaterMaterial.HasProperty(WaterfallRippleSpeedId)) waterfallRippleSpeed = poolWaterMaterial.GetFloat(WaterfallRippleSpeedId);
+        if (poolWaterMaterial.HasProperty(PoolRippleRingSpawnScaleId)) waterfallRippleRingSpawnScale = poolWaterMaterial.GetFloat(PoolRippleRingSpawnScaleId);
+        if (poolWaterMaterial.HasProperty(PoolRippleRingEndScaleId)) waterfallRippleRingEndScale = poolWaterMaterial.GetFloat(PoolRippleRingEndScaleId);
+        if (poolWaterMaterial.HasProperty(PoolRippleRingSpacingId)) waterfallRippleRingSpacing = poolWaterMaterial.GetFloat(PoolRippleRingSpacingId);
+        if (poolWaterMaterial.HasProperty(PoolRippleSpawnFadeDurationId)) waterfallRippleSpawnFadeDuration = poolWaterMaterial.GetFloat(PoolRippleSpawnFadeDurationId);
+        if (poolWaterMaterial.HasProperty(PoolRippleRingEndFadeStartId)) waterfallRippleRingEndFadeStart = poolWaterMaterial.GetFloat(PoolRippleRingEndFadeStartId);
+        if (poolWaterMaterial.HasProperty(PoolRippleFoamIntensityId)) waterfallRippleFoamIntensity = poolWaterMaterial.GetFloat(PoolRippleFoamIntensityId);
+        if (poolWaterMaterial.HasProperty(PoolRippleHeightStrengthId)) waterfallRippleHeightEffect = poolWaterMaterial.GetFloat(PoolRippleHeightStrengthId);
+    }
+
+    private void ApplyWaterfallRippleMaterialProperties()
+    {
+        if (poolWaterMaterial == null)
+        {
+            return;
+        }
+
+        // HasProperty guards retain a safe static-water fallback while this material is authored.
+        if (poolWaterMaterial.HasProperty(WaterfallRippleSpeedId)) poolWaterMaterial.SetFloat(WaterfallRippleSpeedId, waterfallRippleSpeed);
+        if (poolWaterMaterial.HasProperty(PoolRippleRingSpawnScaleId)) poolWaterMaterial.SetFloat(PoolRippleRingSpawnScaleId, waterfallRippleRingSpawnScale);
+        if (poolWaterMaterial.HasProperty(PoolRippleRingEndScaleId)) poolWaterMaterial.SetFloat(PoolRippleRingEndScaleId, waterfallRippleRingEndScale);
+        if (poolWaterMaterial.HasProperty(PoolRippleRingSpacingId)) poolWaterMaterial.SetFloat(PoolRippleRingSpacingId, waterfallRippleRingSpacing);
+        if (poolWaterMaterial.HasProperty(PoolRippleSpawnFadeDurationId)) poolWaterMaterial.SetFloat(PoolRippleSpawnFadeDurationId, waterfallRippleSpawnFadeDuration);
+        if (poolWaterMaterial.HasProperty(PoolRippleRingEndFadeStartId)) poolWaterMaterial.SetFloat(PoolRippleRingEndFadeStartId, waterfallRippleRingEndFadeStart);
+        if (poolWaterMaterial.HasProperty(PoolRippleFoamIntensityId)) poolWaterMaterial.SetFloat(PoolRippleFoamIntensityId, waterfallRippleFoamIntensity);
+        if (poolWaterMaterial.HasProperty(PoolRippleHeightStrengthId)) poolWaterMaterial.SetFloat(PoolRippleHeightStrengthId, waterfallRippleHeightEffect);
     }
 
     /// <summary>
