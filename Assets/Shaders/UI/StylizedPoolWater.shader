@@ -1,3 +1,6 @@
+// Unlit uGUI pool-water compositor. It builds the painted surface from packed masks, a supplied
+// reflection image, and a local waterfall-impact ripple; it never reads the Canvas background.
+// The pass intentionally trades physical accuracy for calm, controllable mobile-friendly motion.
 Shader "Panteon/UI/Stylized Pool Water"
 {
     Properties
@@ -110,6 +113,7 @@ Shader "Panteon/UI/Stylized Pool Water"
             Name "StylizedPoolWaterFoundation"
 
             HLSLPROGRAM
+            // Keep the feature set within Shader Model 2.0 for mobile UI rendering.
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 2.0
@@ -119,6 +123,8 @@ Shader "Panteon/UI/Stylized Pool Water"
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
 
+            // Standard uGUI vertex payload. worldPosition is retained solely for RectMask2D
+            // clipping, not for scene/world-space lighting.
             struct appdata_t
             {
                 float4 vertex : POSITION;
@@ -136,6 +142,8 @@ Shader "Panteon/UI/Stylized Pool Water"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
+            // The five samplers are all author-provided textures. No camera colour/depth texture
+            // is sampled, which keeps the effect valid on a Screen Space Overlay Canvas.
             sampler2D _MainTex;
             sampler2D _WaterMask;
             sampler2D _WaterBorderAndNoisesMask;
@@ -192,6 +200,8 @@ Shader "Panteon/UI/Stylized Pool Water"
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
+                // Preserve the Image geometry and UVs. The surface motion below is entirely
+                // UV-based so the painted pool boundary remains fixed.
                 o.worldPosition = v.vertex;
                 o.vertex = UnityObjectToClipPos(o.worldPosition);
                 o.uv = v.texcoord;
@@ -201,6 +211,8 @@ Shader "Panteon/UI/Stylized Pool Water"
 
             float2 RotateAroundCentre(float2 uv, float radians)
             {
+                // Rotate only the visual ripple lookup around its mask centre. The refraction
+                // lookup remains unrotated, so the water detail stays stable and restrained.
                 float sine = sin(radians);
                 float cosine = cos(radians);
                 float2 centredUv = uv - 0.5;

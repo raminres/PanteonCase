@@ -1,3 +1,6 @@
+// Vertex-deformed uGUI leaf shader. A segmented Image mesh bends from its authored base anchor
+// while the sprite UVs remain fixed, avoiding the travelling texture-noise look of UV distortion.
+// Requires the Canvas Additional Shader Channels setting to include TexCoord1.
 Shader "Panteon/UI/Stylized Leaf Wind"
 {
     Properties
@@ -54,6 +57,7 @@ Shader "Panteon/UI/Stylized Leaf Wind"
             Name "StylizedLeafWind"
 
             HLSLPROGRAM
+            // Shader Model 2.0 is sufficient because the effect is a single sine deformation.
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 2.0
@@ -63,6 +67,9 @@ Shader "Panteon/UI/Stylized Leaf Wind"
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
 
+            // localUvAndPivot is supplied through TexCoord1 by the LeafWindImage mesh:
+            // xy = normalized local mesh position, z = normalized pivot/base height, and w =
+            // RectTransform width, converting the normalized offset into UI-space pixels.
             struct appdata_t
             {
                 float4 vertex : POSITION;
@@ -82,6 +89,7 @@ Shader "Panteon/UI/Stylized Leaf Wind"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
+            // This shader samples only the original sprite; all visible motion happens in vert.
             sampler2D _MainTex;
             fixed4 _Color;
             float4 _WindDirection;
@@ -99,19 +107,24 @@ Shader "Panteon/UI/Stylized Leaf Wind"
 
                 // The segmented LeafWindImage mesh turns this coherent sine into a true
                 // left-right deformation of the leaf silhouette rather than UV distortion.
+                // The max guard also makes a pivot exactly at the leaf tip safe to evaluate.
                 float pivotToTipHeight = max(1.0 - v.localUvAndPivot.z, 0.0001);
                 float anchoredGradient = saturate((v.localUvAndPivot.y - v.localUvAndPivot.z) / pivotToTipHeight);
                 float anchorWeight = pow(anchoredGradient, _AnchorFalloff);
                 float directionLength = max(length(_WindDirection.xy), 0.0001);
                 float2 direction = _WindDirection.xy / directionLength;
                 float3 objectOrigin = mul(unity_ObjectToWorld, float4(0.0, 0.0, 0.0, 1.0)).xyz;
+                // World-position dephasing stops separate leaf Images from moving in lockstep.
                 float phase = (_Time.y * _WindSpeed) + dot(objectOrigin.xy, float2(0.071, 0.113));
                 float sideToSideSway = sin(phase);
                 float broadWaveShape = 0.85 + (sin((anchoredGradient - 0.5) * _WaveFrequency * 3.14159265) * 0.15);
+                // The anchor gradient pins the base while the broad shape prevents a rigid
+                // rotating-card motion. TexCoord1.w scales normalized motion to UI pixels.
                 float vertexOffset = sideToSideSway * broadWaveShape * anchorWeight *
                                      _WindStrength * v.localUvAndPivot.w;
                 v.vertex.xy += direction * vertexOffset;
 
+                // Send the displaced vertex to both the clip-space transform and RectMask2D.
                 o.worldPosition = mul(unity_ObjectToWorld, v.vertex);
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.texcoord;

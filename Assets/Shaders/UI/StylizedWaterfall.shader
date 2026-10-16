@@ -1,3 +1,6 @@
+// Unlit uGUI waterfall for the stylized scene. It combines a static painted silhouette with
+// independently moving packed-mask detail, so animation never changes the waterfall outline.
+// Designed for mobile: no lighting, screen grab, or additional render targets.
 Shader "Panteon/UI/Stylized Waterfall"
 {
     Properties
@@ -65,6 +68,7 @@ Shader "Panteon/UI/Stylized Waterfall"
             Name "StylizedWaterfall"
 
             HLSLPROGRAM
+            // Shader Model 2.0 keeps this pass compatible with the project's mobile target.
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 2.0
@@ -74,6 +78,7 @@ Shader "Panteon/UI/Stylized Waterfall"
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
 
+            // uGUI supplies one quad/mesh vertex, a per-Image tint, and sprite UVs.
             struct appdata_t
             {
                 float4 vertex : POSITION;
@@ -91,6 +96,8 @@ Shader "Panteon/UI/Stylized Waterfall"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
+            // _MainTex is sampled only for the Image alpha. _StreakMask packs all animated
+            // data and its A channel remains in unpanned UV space as the authored silhouette.
             sampler2D _MainTex;
             sampler2D _StreakMask;
             fixed4 _Color;
@@ -112,6 +119,8 @@ Shader "Panteon/UI/Stylized Waterfall"
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
+                // Pass the unmodified UI vertex through; all waterfall movement is texture
+                // motion in the fragment stage rather than geometry deformation.
                 o.worldPosition = v.vertex;
                 o.vertex = UnityObjectToClipPos(o.worldPosition);
                 o.uv = v.texcoord;

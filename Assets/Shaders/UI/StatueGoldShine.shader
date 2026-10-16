@@ -1,3 +1,6 @@
+// Unlit uGUI accent pass for the statue's gold region. It creates a single procedural sweep from
+// UV math, using the Image sprite alpha as its mask instead of sampling a second texture.
+// This keeps the shine cheap and aligned to the existing painted metallic silhouette.
 Shader "Panteon/UI/Statue Gold Shine"
 {
     Properties
@@ -54,6 +57,7 @@ Shader "Panteon/UI/Statue Gold Shine"
             Name "StatueGoldShine"
 
             HLSLPROGRAM
+            // Shader Model 2.0 is enough for the analytic band; no lighting or grab pass is used.
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 2.0
@@ -63,6 +67,7 @@ Shader "Panteon/UI/Statue Gold Shine"
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
 
+            // Standard uGUI geometry/tint/UV payload. worldPosition is used only by RectMask2D.
             struct appdata_t
             {
                 float4 vertex : POSITION;
@@ -80,6 +85,7 @@ Shader "Panteon/UI/Statue Gold Shine"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
+            // The base sprite provides both the statue colour and the alpha mask for the sweep.
             sampler2D _MainTex;
             fixed4 _Color;
             fixed4 _ShineColor;
@@ -95,6 +101,7 @@ Shader "Panteon/UI/Statue Gold Shine"
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
+                // The effect is purely fragment-space; preserve the original UI geometry.
                 o.worldPosition = v.vertex;
                 o.vertex = UnityObjectToClipPos(o.worldPosition);
                 o.uv = v.texcoord;

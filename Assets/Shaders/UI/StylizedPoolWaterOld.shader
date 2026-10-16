@@ -1,3 +1,6 @@
+// Legacy unlit uGUI water implementation retained for comparison/fallback. It uses the older
+// single packed mask convention and is intentionally kept behaviourally unchanged.
+// Unlike the current water shader, this pass has no waterfall-impact ripple integration.
 Shader "Panteon/UI/Stylized Pool Water Old"
 {
     Properties
@@ -75,6 +78,7 @@ Shader "Panteon/UI/Stylized Pool Water Old"
             Name "StylizedPoolWater"
 
             HLSLPROGRAM
+            // The legacy pass also stays at Shader Model 2.0 for mobile Canvas compatibility.
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 2.0
@@ -84,6 +88,7 @@ Shader "Panteon/UI/Stylized Pool Water Old"
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
 
+            // Standard uGUI geometry/tint/UV payload; worldPosition is passed on for UI clipping.
             struct appdata_t
             {
                 float4 vertex : POSITION;
@@ -101,6 +106,8 @@ Shader "Panteon/UI/Stylized Pool Water Old"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
+            // _MaskTex is shared by every old-water feature, reducing sampler count at the cost
+            // of coupling its caustic, wave, coverage, and foam artwork into one texture.
             sampler2D _MainTex;
             sampler2D _MaskTex;
             fixed4 _Color;
@@ -130,6 +137,7 @@ Shader "Panteon/UI/Stylized Pool Water Old"
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
+                // No vertex animation in this legacy pass: all motion comes from panned UVs.
                 o.worldPosition = v.vertex;
                 o.vertex = UnityObjectToClipPos(o.worldPosition);
                 o.uv = v.texcoord;
