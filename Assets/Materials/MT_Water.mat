@@ -108,11 +108,11 @@ Material:
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
-    - _CausticsIntensity: 0.118
+    - _CausticsContrast: 1.08
+    - _CausticsIntensity: 0.297
     - _CausticsLerpSpeed: 0.883
-    - _CausticsContrast: 1
     - _CausticsScale: 4
-    - _CausticsSize: 0.25
+    - _CausticsSize: 0.44
     - _CausticsSpeed: 0.053
     - _CausticsStrength: 1
     - _ClearCoatMask: 0
@@ -147,18 +147,18 @@ Material:
     - _ReflectionFadeDepth: 0.6028701
     - _ReflectionOpacity: 1
     - _ReflectionStrength: 0.319
-    - _RippleFoamIntensity: 0.65
+    - _RippleFoamIntensity: 2.37
     - _RippleFoamRotateSpeed: 2
     - _RippleFoamRotationOffset: 35
     - _RippleHeightStrength: 4
     - _RippleRefractionStrength: 0.025
-    - _RippleRingEndFadeStart: 0.669
+    - _RippleRingEndFadeStart: 0.673
     - _RippleRingEndScale: 1.2
     - _RippleRingSpacing: 0.2
     - _RippleRingSpawnScale: 0.1
-    - _RippleSpawnFadeDuration: 0.4
+    - _RippleSpawnFadeDuration: 0.317
     - _RippleSpeed: 0.107
-    - _RippleVisualFade: 0.65
+    - _RippleVisualFade: 1
     - _ShineAngle: 27.838379
     - _ShineSoftness: 0.001
     - _ShineSpeed: -0.26298654
@@ -190,7 +190,7 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BottomColor: {r: 0.07058824, g: 0.6039216, b: 0.7137255, a: 1}
     - _CausticsColor: {r: 1, g: 1, b: 1, a: 0.9411765}
-    - _CausticsPerspectiveScale: {r: 1, g: 1, b: 0, a: 0}
+    - _CausticsPerspectiveScale: {r: 1, g: 0.5, b: 0, a: 0}
     - _Color: {r: 0.8206953, g: 0.9559748, b: 0.94980544, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}

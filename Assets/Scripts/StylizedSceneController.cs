@@ -41,7 +41,7 @@ public sealed class StylizedSceneController : MonoBehaviour
     private static readonly int PoolRippleRingEndScaleId = Shader.PropertyToID("_RippleRingEndScale");
     private static readonly int PoolRippleRingSpacingId = Shader.PropertyToID("_RippleRingSpacing");
     private static readonly int PoolRippleSpawnFadeDurationId = Shader.PropertyToID("_RippleSpawnFadeDuration");
-    private static readonly int PoolRippleRingEndFadeStartId = Shader.PropertyToID("_RippleRingEndFadeStart");
+    private static readonly int PoolRippleVisualFadeId = Shader.PropertyToID("_RippleVisualFade");
     private static readonly int PoolRippleHeightStrengthId = Shader.PropertyToID("_RippleHeightStrength");
     private static readonly int PoolRippleFoamIntensityId = Shader.PropertyToID("_RippleFoamIntensity");
     private static readonly int CloudSpeedId = Animator.StringToHash("Speed");
@@ -175,7 +175,7 @@ public sealed class StylizedSceneController : MonoBehaviour
     [SerializeField] private Slider poolWaterFoamDistortionSizeSlider;
 
     [Header("Waterfall Ripple UI Bindings")]
-    [Tooltip("Optional slider controlling the point in a ring lifetime where its outer-edge fade begins. Use a range of 0.4 to 0.95.")]
+    [Tooltip("Optional slider controlling the visible opacity of the ripple rings. Use a range of 0 to 1.")]
     [SerializeField] private Slider waterfallRippleRingFadeSlider;
 
     [Tooltip("Optional slider controlling the R-channel foam detail layered on the ripple rings. Use a range of 0 to 3.")]
@@ -223,7 +223,7 @@ public sealed class StylizedSceneController : MonoBehaviour
     private float waterfallRippleRingEndScale;
     private float waterfallRippleRingSpacing;
     private float waterfallRippleSpawnFadeDuration;
-    private float waterfallRippleRingEndFadeStart;
+    private float waterfallRippleVisualFade;
     private float waterfallRippleFoamIntensity;
     private float waterfallRippleHeightEffect;
 
@@ -504,10 +504,10 @@ public sealed class StylizedSceneController : MonoBehaviour
         ApplyPoolWaterMaterialProperties();
     }
 
-    /// <summary>Sets when each continuous ripple ring begins to fade at the outer edge.</summary>
-    public void SetWaterfallRippleRingFade(float fadeStart)
+    /// <summary>Sets the visible opacity of the composited ripple rings.</summary>
+    public void SetWaterfallRippleRingFade(float fade)
     {
-        waterfallRippleRingEndFadeStart = Mathf.Clamp(fadeStart, 0.4f, 0.95f);
+        waterfallRippleVisualFade = Mathf.Clamp01(fade);
         ApplyWaterfallRippleMaterialProperties();
     }
 
@@ -518,7 +518,7 @@ public sealed class StylizedSceneController : MonoBehaviour
         ApplyWaterfallRippleMaterialProperties();
     }
 
-    /// <summary>Sets the shared height multiplier used by the overlay relief and pool refraction.</summary>
+    /// <summary>Sets the shared height multiplier used by the visible relief and pool refraction.</summary>
     public void SetWaterfallRippleHeightEffect(float strength)
     {
         waterfallRippleHeightEffect = Mathf.Clamp(strength, 0f, 4f);
@@ -1110,7 +1110,7 @@ public sealed class StylizedSceneController : MonoBehaviour
     {
         if (waterfallRippleRingFadeSlider != null)
         {
-            waterfallRippleRingFadeSlider.SetValueWithoutNotify(waterfallRippleRingEndFadeStart);
+            waterfallRippleRingFadeSlider.SetValueWithoutNotify(waterfallRippleVisualFade);
         }
 
         if (waterfallRippleFoamIntensitySlider != null)
@@ -1309,7 +1309,7 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (poolWaterMaterial.HasProperty(PoolRippleRingEndScaleId)) waterfallRippleRingEndScale = poolWaterMaterial.GetFloat(PoolRippleRingEndScaleId);
         if (poolWaterMaterial.HasProperty(PoolRippleRingSpacingId)) waterfallRippleRingSpacing = poolWaterMaterial.GetFloat(PoolRippleRingSpacingId);
         if (poolWaterMaterial.HasProperty(PoolRippleSpawnFadeDurationId)) waterfallRippleSpawnFadeDuration = poolWaterMaterial.GetFloat(PoolRippleSpawnFadeDurationId);
-        if (poolWaterMaterial.HasProperty(PoolRippleRingEndFadeStartId)) waterfallRippleRingEndFadeStart = poolWaterMaterial.GetFloat(PoolRippleRingEndFadeStartId);
+        if (poolWaterMaterial.HasProperty(PoolRippleVisualFadeId)) waterfallRippleVisualFade = poolWaterMaterial.GetFloat(PoolRippleVisualFadeId);
         if (poolWaterMaterial.HasProperty(PoolRippleFoamIntensityId)) waterfallRippleFoamIntensity = poolWaterMaterial.GetFloat(PoolRippleFoamIntensityId);
         if (poolWaterMaterial.HasProperty(PoolRippleHeightStrengthId)) waterfallRippleHeightEffect = poolWaterMaterial.GetFloat(PoolRippleHeightStrengthId);
     }
@@ -1327,7 +1327,7 @@ public sealed class StylizedSceneController : MonoBehaviour
         if (poolWaterMaterial.HasProperty(PoolRippleRingEndScaleId)) poolWaterMaterial.SetFloat(PoolRippleRingEndScaleId, waterfallRippleRingEndScale);
         if (poolWaterMaterial.HasProperty(PoolRippleRingSpacingId)) poolWaterMaterial.SetFloat(PoolRippleRingSpacingId, waterfallRippleRingSpacing);
         if (poolWaterMaterial.HasProperty(PoolRippleSpawnFadeDurationId)) poolWaterMaterial.SetFloat(PoolRippleSpawnFadeDurationId, waterfallRippleSpawnFadeDuration);
-        if (poolWaterMaterial.HasProperty(PoolRippleRingEndFadeStartId)) poolWaterMaterial.SetFloat(PoolRippleRingEndFadeStartId, waterfallRippleRingEndFadeStart);
+        if (poolWaterMaterial.HasProperty(PoolRippleVisualFadeId)) poolWaterMaterial.SetFloat(PoolRippleVisualFadeId, waterfallRippleVisualFade);
         if (poolWaterMaterial.HasProperty(PoolRippleFoamIntensityId)) poolWaterMaterial.SetFloat(PoolRippleFoamIntensityId, waterfallRippleFoamIntensity);
         if (poolWaterMaterial.HasProperty(PoolRippleHeightStrengthId)) poolWaterMaterial.SetFloat(PoolRippleHeightStrengthId, waterfallRippleHeightEffect);
     }
