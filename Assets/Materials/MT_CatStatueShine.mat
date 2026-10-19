@@ -106,10 +106,10 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _ShineAngle: 96.391754
+    - _ShineAngle: 48.04313
     - _ShineSoftness: 0.001
-    - _ShineSpeed: 0.24651432
-    - _ShineWidth: 0.01
+    - _ShineSpeed: 0.5387995
+    - _ShineWidth: 0.025484351
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
